@@ -34,7 +34,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 >
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
   <article>
-    <img src={post.featuredImage ?? fallbackImage.src} alt="" class="w-full h-64 object-cover rounded-lg mb-6" />
+    <img src={post.featuredImage ?? fallbackImage.src} alt="" width="1200" height="480" class="w-full h-64 object-cover rounded-xl mb-6" />
     <time datetime={post.date} class="text-sm text-ink/60">
       {dateFormatter.format(new Date(post.date))}
     </time>

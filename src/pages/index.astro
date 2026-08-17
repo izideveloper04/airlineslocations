@@ -2,19 +2,19 @@
 // Hand-built landing page. SSR (prerender = false) so the airline directory
 // count/list below never goes stale between deploys.
 //
-// Design read (design-taste-frontend skill, Section 0.B): a consumer/B2B
-// directory landing page for travelers and airlines, utility-first rather
-// than agency-experimental, built on Tailwind + the site's existing
-// self-hosted Fraunces/Inter pairing. Dials: DESIGN_VARIANCE 6 (asymmetric
-// split hero, varied section rhythm - not perfectly symmetric, not chaotic),
-// MOTION_INTENSITY 4 (CSS transitions + scroll-reveal, no scroll-hijacking),
-// VISUAL_DENSITY 3 (airy, generous whitespace - a directory tool, not a
-// cockpit). Astro has no React runtime, so Motion/GSAP-specific patterns
-// from the skill translate to vanilla CSS transitions + IntersectionObserver
-// below. Fraunces/Inter and the hand-drawn stroke-icon style are kept
-// deliberately despite the skill's default-avoidance guidance - they're
-// existing, already-licensed brand assets used consistently sitewide (see
-// src/assets/fonts/README.md), not a fresh default reach.
+// Design read (design-taste-frontend skill, Section 0.B): an SEO-first
+// informational directory for travelers who mostly land on deep pages from
+// Google - utility/lookup-tool clarity over agency-experimental, built on
+// Tailwind + one self-hosted Inter family used at weight/tracking for
+// display instead of a separate serif (see src/styles/global.css). Dials:
+// DESIGN_VARIANCE 5 (asymmetric split hero, varied section rhythm - not
+// perfectly symmetric, not chaotic), MOTION_INTENSITY 4 (CSS transitions +
+// scroll-reveal, no scroll-hijacking), VISUAL_DENSITY 4 (room to breathe
+// without going gallery-airy - deep pages carry real lookup content). Astro
+// has no React runtime, so Motion/GSAP-specific patterns from the skill
+// translate to vanilla CSS transitions + IntersectionObserver below. The
+// hand-drawn stroke-icon style is kept deliberately - it's already used
+// consistently sitewide, not a fresh default reach.
 export const prerender = false;
 
 import BaseLayout from "../layouts/BaseLayout.astro";

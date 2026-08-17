@@ -15,7 +15,7 @@ const { pages } = Astro.props;
     {pages.map((page) => (
       <a
         href={`/${page.fullPath}`}
-        class="group block rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+        class="group block rounded-xl border border-ink/10 bg-white overflow-hidden shadow-sm hover:border-brand-light hover:shadow-md transition-[border-color,box-shadow] duration-200"
       >
         <div class="aspect-[4/3] bg-surface">
           <img
