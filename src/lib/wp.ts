@@ -402,7 +402,7 @@ export function resolvePageMeta(page: { title: string; yoast: YoastHead | null }
   const title =
     yoast?.title && yoast.title.trim().length > 0
       ? yoast.title
-      : `${page.title} – ${site.title}`;
+      : `${page.title} - ${site.title}`;
 
   const description =
     yoast?.description && yoast.description.trim().length > 0

@@ -1,0 +1,26 @@
+---
+// Shared banner treatment for a WP page/post's featured image, with a
+// consistent fallback when one hasn't been set — used by ParentPageLayout,
+// ChildPageLayout, and DefaultPageLayout so every page type gets the same
+// visual anchor regardless of template. Decorative (empty alt): the
+// adjacent <h1> already carries the page title, so a real alt would be
+// read twice by a screen reader for no added information.
+import fallbackImage from "../assets/images/airpp.webp";
+
+interface Props {
+  src: string | null;
+}
+
+const { src } = Astro.props;
+---
+
+<img
+  src={src ?? fallbackImage.src}
+  alt=""
+  width="1600"
+  height="686"
+  loading="eager"
+  fetchpriority="high"
+  decoding="async"
+  class="w-full aspect-[21/9] object-cover rounded-xl border border-ink/10 mb-8"
+/>

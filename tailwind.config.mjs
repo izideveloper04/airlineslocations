@@ -26,7 +26,9 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Fraunces", "ui-serif", "Georgia", "serif"],
+        // Same face as `sans` — display hierarchy comes from weight/tracking
+        // (see the font-display class in global.css), not a second typeface.
+        display: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       // Aliases the plain Tailwind shadow-sm/shadow-md utilities (already
       // used across several components) to the same --shadow-sm/--shadow-md

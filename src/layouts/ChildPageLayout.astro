@@ -2,6 +2,7 @@
 import BaseLayout from "./BaseLayout.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import PageSidebar from "../components/PageSidebar.astro";
+import FeaturedImage from "../components/FeaturedImage.astro";
 import type { WPPage, PageTree, ResolvedPageMeta } from "../lib/wp";
 import { getAncestorChain, getSiblings, isChildTemplate } from "../lib/wp";
 
@@ -42,6 +43,7 @@ const breadcrumbItems = [
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     <article class="md:col-span-2">
+      <FeaturedImage src={page.featuredImage} />
       <h1 class="text-3xl font-bold mb-6">{page.title}</h1>
       <div class="prose" set:html={page.content} />
     </article>

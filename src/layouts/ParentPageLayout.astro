@@ -2,6 +2,7 @@
 import BaseLayout from "./BaseLayout.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import RelatedPages from "../components/RelatedPages.astro";
+import FeaturedImage from "../components/FeaturedImage.astro";
 import type { WPPage, PageTree, ResolvedPageMeta } from "../lib/wp";
 import { getAncestorChain, getChildren } from "../lib/wp";
 
@@ -30,9 +31,11 @@ const breadcrumbItems = [
   ogDescription={meta.ogDescription}
   ogImage={meta.ogImage}
 >
-  <!-- Hero: title + breadcrumb only — this template is a directory page,
-       not a content page, so page.content is deliberately never rendered
-       here. No sidebar either; children render as a card grid below. -->
+  <!-- Hero: image + title + breadcrumb only — this template is a directory
+       page, not a content page, so page.content is deliberately never
+       rendered here. No sidebar either; children render as a card grid
+       below. -->
+  <FeaturedImage src={page.featuredImage} />
   <header class="border-b border-ink/10 pb-6 mb-8">
     <h1 class="text-3xl md:text-4xl font-bold mb-4">{page.title}</h1>
     <Breadcrumbs items={breadcrumbItems} />
