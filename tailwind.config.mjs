@@ -1,0 +1,42 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./src/**/*.{astro,html,js,ts,jsx,tsx,md,mdx}"],
+  theme: {
+    extend: {
+      // Must stay in sync with the CSS custom properties in
+      // src/styles/global.css (:root) — that file is the newer, primary
+      // source (used directly via var(--brand) etc. in index.astro), this
+      // is the older Tailwind-theme mirror still used by every other
+      // component (bg-brand, text-ink/60, border-ink/10, ...). Kept as
+      // plain hex rather than var(--x) references because Tailwind's /NN
+      // opacity-modifier syntax (used pervasively across this codebase)
+      // needs a real color value, not a CSS variable, to composite alpha.
+      colors: {
+        brand: {
+          DEFAULT: "#036a32",
+          dark: "#023d1d",
+          light: "#4ca771",
+        },
+        accent: {
+          DEFAULT: "#f5a623",
+          dark: "#c97f0e",
+        },
+        ink: "#12231a",
+        surface: "#f7f3e9",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        display: ["Fraunces", "ui-serif", "Georgia", "serif"],
+      },
+      // Aliases the plain Tailwind shadow-sm/shadow-md utilities (already
+      // used across several components) to the same --shadow-sm/--shadow-md
+      // tokens index.astro references directly — one shadow system sitewide
+      // instead of two coexisting ones.
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+      },
+    },
+  },
+  plugins: [],
+};

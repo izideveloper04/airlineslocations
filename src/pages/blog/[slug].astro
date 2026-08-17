@@ -1,0 +1,45 @@
+---
+// Individual blog post — sourced from WP posts (getPostBySlug), not the
+// page hierarchy. Takes priority over [...slug].astro for anything under
+// /blog/ since Astro matches this more specific route first.
+export const prerender = false;
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import { getPostBySlug, getSiteSettings, resolvePageMeta } from "../../lib/wp";
+import fallbackImage from "../../assets/images/airpp.webp";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const { slug } = Astro.params;
+const post = slug ? await getPostBySlug(slug) : undefined;
+
+if (!post) {
+  return Astro.rewrite("/404");
+}
+
+const siteSettings = await getSiteSettings();
+const meta = resolvePageMeta(post, siteSettings);
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
+---
+
+<BaseLayout
+  title={meta.title}
+  description={meta.description}
+  canonical={meta.canonical}
+  ogTitle={meta.ogTitle}
+  ogDescription={meta.ogDescription}
+  ogImage={meta.ogImage}
+>
+  <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
+  <article>
+    <img src={post.featuredImage ?? fallbackImage.src} alt="" class="w-full h-64 object-cover rounded-lg mb-6" />
+    <time datetime={post.date} class="text-sm text-ink/60">
+      {dateFormatter.format(new Date(post.date))}
+    </time>
+    <h1 class="text-3xl font-bold mt-2 mb-6">{post.title}</h1>
+    <div class="prose" set:html={post.content} />
+  </article>
+  <p class="mt-8"><a href="/blog" class="text-brand underline">← Back to Blog</a></p>
+</BaseLayout>

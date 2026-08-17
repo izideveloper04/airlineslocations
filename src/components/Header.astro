@@ -1,0 +1,64 @@
+---
+// Purely presentational — the actual menu content lives in
+// src/lib/navigation.ts. Edit that file to add/remove/reorder items or
+// submenu entries; nothing here needs to change.
+import { navItems } from "../lib/navigation";
+---
+
+<header class="bg-white border-b border-ink/10 sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-8">
+    <a href="/" class="flex items-center gap-2 shrink-0 font-bold text-lg text-brand">
+      <svg aria-hidden="true" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" />
+      </svg>
+      LOS Airport
+    </a>
+
+    <!-- overflow-x only below lg: an "auto" (or any non-visible) value on
+         either axis forces BOTH axes into a clipped scrollport per the CSS
+         overflow spec, which was silently clipping submenu dropdowns
+         below. Scoping it to narrow screens avoids that on desktop, where
+         hover dropdowns actually apply and all 8 items already fit anyway. -->
+    <nav aria-label="Primary" class="min-w-0 max-lg:overflow-x-auto lg:overflow-visible">
+      <ul class="flex items-center gap-7 text-sm font-semibold text-ink whitespace-nowrap">
+        {navItems.map((item) => (
+          <li class:list={["relative", (item.submenu?.length ?? 0) > 0 && "group"]}>
+            {item.href ? (
+              <a href={item.href} class="inline-flex items-center gap-1 py-2 hover:text-brand transition-colors">
+                {item.label}
+                {item.chevron && (
+                  <svg aria-hidden="true" class="w-3.5 h-3.5 text-ink/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                )}
+              </a>
+            ) : (
+              <span class="inline-flex items-center gap-1 py-2 text-ink/50 cursor-default">
+                {item.label}
+                {item.chevron && (
+                  <svg aria-hidden="true" class="w-3.5 h-3.5 text-ink/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                )}
+              </span>
+            )}
+
+            {item.submenu && item.submenu.length > 0 && (
+              <div class="absolute left-0 top-full pt-1 w-56 opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 transition-all duration-150 z-50">
+                <ul class="bg-white border border-ink/10 rounded-lg shadow-lg py-2">
+                  {item.submenu.map((entry) => (
+                    <li>
+                      <a href={entry.href} class="block px-4 py-2 text-sm font-normal text-ink hover:bg-surface hover:text-brand">
+                        {entry.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>

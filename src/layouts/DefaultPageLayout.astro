@@ -1,0 +1,36 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import type { WPPage, PageTree, ResolvedPageMeta } from "../lib/wp";
+import { getAncestorChain } from "../lib/wp";
+
+interface Props {
+  page: WPPage;
+  tree: PageTree;
+  meta: ResolvedPageMeta;
+}
+
+const { page, tree, meta } = Astro.props;
+const ancestors = getAncestorChain(page, tree);
+
+const breadcrumbItems = [
+  { label: "Home", href: "/" },
+  ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
+  { label: page.title },
+];
+---
+
+<BaseLayout
+  title={meta.title}
+  description={meta.description}
+  canonical={meta.canonical}
+  ogTitle={meta.ogTitle}
+  ogDescription={meta.ogDescription}
+  ogImage={meta.ogImage}
+>
+  <Breadcrumbs items={breadcrumbItems} />
+  <article>
+    <h1 class="text-3xl font-bold mb-6">{page.title}</h1>
+    <div class="prose" set:html={page.content} />
+  </article>
+</BaseLayout>

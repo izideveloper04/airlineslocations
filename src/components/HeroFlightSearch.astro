@@ -1,0 +1,44 @@
+---
+// One of three near-identical single-field search pills in the hero
+// (departure/arrival/status) — wired up by the shared client script in
+// src/pages/index.astro (data-hero-search + id convention below), which
+// posts to src/pages/api/flight-search.ts and renders the JSON result.
+interface Props {
+  searchId: "departure" | "arrival" | "status";
+  label: string;
+  placeholder: string;
+}
+
+const { searchId, label, placeholder } = Astro.props;
+---
+
+<form
+  class="bg-white rounded-full shadow-sm p-2 flex items-stretch gap-2"
+  id={`hero-search-${searchId}`}
+  data-hero-search={searchId}
+>
+  <div class="flex flex-col px-4 py-1.5 flex-1 min-w-0">
+    <label for={`hero-search-${searchId}-input`} class="text-[11px] font-semibold uppercase tracking-wide text-ink/50 mb-0.5">
+      {label}
+    </label>
+    <input
+      id={`hero-search-${searchId}-input`}
+      type="text"
+      placeholder={placeholder}
+      autocomplete="off"
+      class="bg-transparent text-sm min-h-[28px] w-full focus:outline-none placeholder:text-ink/40"
+    />
+  </div>
+  <button
+    type="button"
+    id={`hero-search-${searchId}-submit`}
+    aria-label={`Search ${label.toLowerCase()}`}
+    class="inline-flex items-center justify-center shrink-0 gap-2 bg-brand text-white rounded-full w-12 hover:bg-brand-dark transition-colors"
+  >
+    <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" stroke-linecap="round" />
+    </svg>
+  </button>
+</form>
+
+<div id={`hero-search-${searchId}-result`} class="mt-4"></div>
