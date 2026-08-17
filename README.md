@@ -1,4 +1,4 @@
-# LOS Airport — Astro Frontend + Headless WordPress Backend
+# Airlines Locations — Astro Frontend + Headless WordPress Backend
 
 ## Overview
 
@@ -29,7 +29,7 @@ Every WP page has an assigned page template (e.g. a "Parent" template vs a "Chil
 ## Tech stack
 
 - **Astro**, hybrid output (`output: "hybrid"`) with the `@astrojs/node` adapter (standalone mode) — the homepage and 404 prerender to plain HTML at build time; WP content pages and the flight-search route render live per request on a persistent Node process. Deployed on **Hostinger only**, via their Node.js App feature (Business/Cloud plans) — see `IMPLEMENTATION.md` §11 for the full deployment writeup and why this replaced an earlier fully-static attempt.
-- **WordPress** — headless CMS only, installed on its own Hostinger subdomain (`cms.airlineslocations.com`, separate from the Astro app's `lagos-losairport.com`), exposing content via the core REST API plus one custom field (`wp_template`, see `wordpress/rest-api-additions.php`). WPGraphQL was considered and rejected to avoid an extra plugin dependency for something the REST API already covers.
+- **WordPress** — headless CMS only, installed on its own Hostinger subdomain (`cms.airlineslocations.com`, separate from the Astro app's `airlineslocations.com`), exposing content via the core REST API plus one custom field (`wp_template`, see `wordpress/rest-api-additions.php`). WPGraphQL was considered and rejected to avoid an extra plugin dependency for something the REST API already covers.
 - **Tailwind CSS** — styling, self-hosted build via `@astrojs/tailwind`, no CDN.
 - **AviationStack API** — flight search bars, implemented as a zero-JS-framework island (plain HTML + a small vanilla `<script>`) living directly in the relevant `.astro` files, calling a server-side proxy route so the API key never reaches the browser.
 
