@@ -1,0 +1,56 @@
+---
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { isStaging } from "../lib/config";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  /** Escapes the default centered/padded <main> for edge-to-edge landing pages. */
+  fullBleed?: boolean;
+}
+
+const { title, description, canonical, ogTitle, ogDescription, ogImage, fullBleed = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    {isStaging && <meta name="robots" content="noindex, nofollow" />}
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical ?? new URL(Astro.url.pathname, Astro.site).toString()} />
+
+    <meta property="og:title" content={ogTitle ?? title} />
+    {(ogDescription ?? description) && (
+      <meta property="og:description" content={ogDescription ?? description} />
+    )}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property="og:type" content="website" />
+
+    <!-- Derived from the same OG fields above rather than a dedicated Yoast
+         twitter_card field — kept to fields already verified present on this
+         install so nothing here is guessed. -->
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={ogTitle ?? title} />
+    {(ogDescription ?? description) && (
+      <meta name="twitter:description" content={ogDescription ?? description} />
+    )}
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+  </head>
+  <body class="min-h-screen flex flex-col bg-surface text-ink font-sans antialiased">
+    <Header />
+    <main class={fullBleed ? "flex-1 w-full" : "flex-1 w-full max-w-5xl mx-auto px-4 py-8"}>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

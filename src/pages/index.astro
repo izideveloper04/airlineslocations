@@ -1,0 +1,427 @@
+---
+// Hand-built landing page. SSR (prerender = false) rather than static so
+// the live flight boards and WP posts below never go stale between
+// deploys, and so the JSON-LD schema's Astro.site resolution stays
+// per-request.
+export const prerender = false;
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import FlightBoard from "../components/FlightBoard.astro";
+import HeroFlightSearch from "../components/HeroFlightSearch.astro";
+import { getAirportBoard } from "../lib/aviationstack";
+import { getPosts } from "../lib/wp";
+import fallbackImage from "../assets/images/airpp.webp";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const airportSchema = {
+  "@context": "https://schema.org",
+  "@type": "Airport",
+  name: "Murtala Muhammed International Airport",
+  iataCode: "LOS",
+  url: Astro.site?.toString(),
+};
+
+// Feeds the welcome-section flight board (hero's Departures/Arrivals/Flight
+// Status tabs are user-initiated search instead — no auto-fetch there, so
+// AviationStack is only ever called when a visitor actually searches).
+const [departureBoard, arrivalBoard, latestPosts] = await Promise.all([
+  getAirportBoard("departure"),
+  getAirportBoard("arrival"),
+  getPosts(),
+]);
+
+const newsItems = latestPosts.slice(0, 4);
+const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
+
+// Exactly three keys (title/image/url) so the guide-track slider below can
+// stay a flat .map() — add a card by adding an entry here, nothing else.
+const guideCards = [
+  { title: "Departures Guide", image: "https://cms.airlineslocations.com/wp-content/uploads/2026/08/departure-image.webp", url: "#" },
+  { title: "Arrivals Guide", image: "https://cms.airlineslocations.com/wp-content/uploads/2026/08/arrival-image.webp", url: "#" },
+  { title: "Connections Guide", image: "https://cms.airlineslocations.com/wp-content/uploads/2026/08/connection-guide-image.webp", url: "#" },
+  { title: "All Terminals", image: "https://cms.airlineslocations.com/wp-content/uploads/2026/08/all-eterminals-image.webp", url: "#" },
+];
+---
+
+<BaseLayout
+  title="LOS Airport — Flight Status, Parking & Airport Guide"
+  description="Track flight status, find parking, and plan your trip through Murtala Muhammed International Airport (LOS)."
+  fullBleed
+>
+  <script type="application/ld+json" set:html={JSON.stringify(airportSchema)} is:inline />
+
+   <!-- =========================================================
+       1. HERO SECTION
+  ========================================================== -->
+  <section class="hero">
+    <div class="hero__bg">
+      <img
+        src="https://cms.airlineslocations.com/wp-content/uploads/2026/08/home-bnr.webp"
+        alt="Aerial view of Lagos skyline"
+        width="1800"
+        height="900"
+        fetchpriority="high"
+        loading="eager"
+      >
+      <div class="hero__scrim"></div>
+    </div>
+
+    <!-- h1 + search panel live in one flow block so they move as a single
+         unit at every screen size — no more separately-positioned pieces
+         that can drift out of sync with each other. -->
+    <div class="hero__content">
+      <h1 class="hero__wordmark">LOS</h1>
+
+      <div class="hero__panel">
+        <div class="hero-tabs" role="tablist">
+          <button class="hero-tabs__item is-active" type="button" data-tab="departures" role="tab" aria-selected="true" aria-controls="hero-panel-departures">
+            Departures
+          </button>
+          <button class="hero-tabs__item" type="button" data-tab="arrivals" role="tab" aria-selected="false" aria-controls="hero-panel-arrivals">
+            Arrivals
+          </button>
+          <button class="hero-tabs__item" type="button" data-tab="status" role="tab" aria-selected="false" aria-controls="hero-panel-status">
+            Flight Status
+          </button>
+        </div>
+
+        <div class="hero-panel" id="hero-panel-departures" data-panel="departures" role="tabpanel">
+          <HeroFlightSearch searchId="departure" label="Destination airport code" placeholder="e.g. LOS" />
+        </div>
+        <div class="hero-panel" id="hero-panel-arrivals" data-panel="arrivals" role="tabpanel" hidden>
+          <HeroFlightSearch searchId="arrival" label="Origin airport code" placeholder="e.g. LOS" />
+        </div>
+        <div class="hero-panel" id="hero-panel-status" data-panel="status" role="tabpanel" hidden>
+          <HeroFlightSearch searchId="status" label="Flight number" placeholder="e.g. UN578" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       2. WELCOME + FLIGHT BOARD
+  ========================================================== -->
+  <section class="welcome-section">
+    <div class="welcome-section__inner">
+
+      <div class="welcome-content">
+        <h2>Welcome to Murtala Muhammed International Airport</h2>
+        <p>Your world-class gateway to the world.</p>
+
+        <ul class="welcome-stats">
+          <li>
+            <span class="welcome-stats__value">2</span>
+            <span class="welcome-stats__label">Terminals — International &amp; Domestic</span>
+          </li>
+          <li>
+            <span class="welcome-stats__value">24/7</span>
+            <span class="welcome-stats__label">Live flight status</span>
+          </li>
+          <li>
+            <span class="welcome-stats__value">3</span>
+            <span class="welcome-stats__label">Continents served nonstop</span>
+          </li>
+        </ul>
+
+        <a class="btn btn--primary" href="#guide-section">Explore the airport guide →</a>
+      </div>
+
+      <div class="welcome-panel">
+        <div class="welcome-panel__tabs" role="tablist">
+          <button type="button" class="is-active" data-tab="departures" role="tab" aria-selected="true" aria-controls="welcome-panel-departures">
+            Departures
+          </button>
+          <button type="button" data-tab="arrivals" role="tab" aria-selected="false" aria-controls="welcome-panel-arrivals">
+            Arrivals
+          </button>
+        </div>
+
+        <div class="welcome-panel__body" id="welcome-panel-departures" data-panel="departures" role="tabpanel">
+          <FlightBoard result={departureBoard} direction="departure" />
+        </div>
+        <div class="welcome-panel__body" id="welcome-panel-arrivals" data-panel="arrivals" role="tabpanel" hidden>
+          <FlightBoard result={arrivalBoard} direction="arrival" />
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. GUIDE SECTION
+  ========================================================== -->
+  <section class="guide-section" id="guide-section">
+    <div class="guide-section__header">
+      <h2>Your Guide to LOS</h2>
+    </div>
+
+    <div class="guide-track">
+      {guideCards.map((card) => (
+        <a class="guide-card" href={card.url}>
+          <img src={card.image} alt={card.title} width="500" height="560" loading="lazy" decoding="async">
+          <div class="guide-card__overlay">
+            <span>{card.title}</span>
+            <span class="guide-card__arrow" aria-hidden="true">→</span>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <div class="guide-nav">
+      <button type="button" class="guide-nav__btn" data-slide="prev" aria-label="Previous">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+      </button>
+      <button type="button" class="guide-nav__btn" data-slide="next" aria-label="Next">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. ESSENTIALS SECTION
+  ========================================================== -->
+  <section class="essentials">
+    <h2>Get your essentials and more at LOS</h2>
+
+    <div class="essentials__grid">
+      <article class="essentials__card">
+        <img src="https://cms.airlineslocations.com/wp-content/uploads/2026/08/air3.webp" alt="Dining options at LOS Airport" width="700" height="460" loading="lazy" decoding="async">
+        <div class="essentials__body">
+          <p class="essentials__label">
+            <svg class="essentials__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2M8 11v11M18 2c-1.2 3.5-1.2 7 0 10.5V22" /></svg>
+            Dine
+          </p>
+          <p class="essentials__desc">From quick bites to sit-down meals, our dining options cover a range of dietary needs and preferences—perfect whether you're in a rush or ready to relax.</p>
+          <a href="#">LOS Airport restaurants →</a>
+        </div>
+      </article>
+
+      <article class="essentials__card">
+        <img src="https://cms.airlineslocations.com/wp-content/uploads/2026/08/air2.webp" alt="Shopping at LOS Airport" width="700" height="460" loading="lazy" decoding="async">
+        <div class="essentials__body">
+          <p class="essentials__label">
+            <svg class="essentials__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L6 7Z" /><path d="M9 7V5a3 3 0 0 1 6 0v2" /></svg>
+            Shop
+          </p>
+          <p class="essentials__desc">Forgot something? Find last minute travel essentials like snacks, sunglasses, chargers, souvenirs and more.</p>
+          <a href="#">LOS Airport shops →</a>
+        </div>
+      </article>
+
+      <article class="essentials__card">
+        <img src="https://cms.airlineslocations.com/wp-content/uploads/2026/08/air4.webp" alt="Relaxation area at LOS Airport" width="700" height="460" loading="lazy" decoding="async">
+        <div class="essentials__body">
+          <p class="essentials__label">
+            <svg class="essentials__icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4" /><path d="M3 11h18v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Z" /><path d="M5 18v2M19 18v2" /></svg>
+            Relax
+          </p>
+          <p class="essentials__desc">Looking for a place to relax before your flight? Discover airport lounges, spas and more.</p>
+          <a href="#">Places to relax at LOS Airport →</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       5. INFORMATION / ALERT SECTION
+  ========================================================== -->
+  <section class="info-section">
+    <div class="info-section__text">
+      <p class="info-section__eyebrow">Stay up to date with the latest LOS alerts</p>
+      <h2>Terminal improvement works are underway at LOS</h2>
+    </div>
+    <div class="info-section__aside">
+      <p>Drivers and rideshare services, please plan ahead for delays or reroutes due to closures of parts of the airport roadway network. The Federal Airports Authority of Nigeria (FAAN) provides alerts and advisories to help keep travelers informed about incidents or events at the airport.</p>
+      <div class="info-section__actions">
+        <a class="btn btn--primary" href="#">Review all alerts and advisories →</a>
+        <a class="btn btn--outline" href="#">Explore public transportation options →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       6. ACCESSIBILITY SECTION
+  ========================================================== -->
+  <section class="accessibility">
+    <div class="accessibility__inner">
+      <div class="accessibility__content">
+        <h2>Accessibility assistance at LOS</h2>
+        <p>LOS offers a range of accessibility features and services designed to make every part of your trip through our terminals accessible and comfortable. For additional assistance—such as mobility support or help navigating between gates, terminals, security, or customs—you may also wish to arrange support in advance through your airline.</p>
+        <div class="accessibility__actions">
+          <a class="btn btn--primary" href="#">Contact your airline →</a>
+          <a class="btn btn--outline" href="#">General accessibility services →</a>
+        </div>
+      </div>
+      <div class="accessibility__image">
+        <img src="https://cms.airlineslocations.com/wp-content/uploads/2026/08/imgy.webp" alt="Accessibility assistance at LOS Airport" width="900" height="700" loading="lazy" decoding="async">
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       7. NEWS AND PROMOTIONS
+  ========================================================== -->
+  <section class="news-section">
+    <h2>News and Promotions</h2>
+
+    {newsItems.length > 0 ? (
+      <div class="news-grid">
+        {newsItems.map((post) => (
+          <article class="news-card">
+            <a href={`/blog/${post.slug}`} class="news-card__media">
+              <img src={post.featuredImage ?? fallbackImage.src} alt="" width="500" height="360" loading="lazy" decoding="async">
+            </a>
+            <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
+            <time datetime={post.date} class="news-card__date">{postDateFormatter.format(new Date(post.date))}</time>
+            <div class="news-card__excerpt" set:html={post.excerpt} />
+            <a href={`/blog/${post.slug}`} class="news-card__cta">Learn more →</a>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <p class="news-section__empty">No news or promotions published yet — check back soon.</p>
+    )}
+  </section>
+
+  <script>
+    // ---- Tab groups: hero (Departures/Arrivals/Flight Status) and the
+    // welcome-panel flight board (Departures/Arrivals) reuse the same
+    // data-tab/data-panel values, so each group is wired independently,
+    // scoped to its own container — a global querySelectorAll would let a
+    // click in one group hide panels in the other.
+    function wireTabs(container: Element, tabSelector: string, panelSelector: string) {
+      const tabButtons = container.querySelectorAll<HTMLButtonElement>(tabSelector);
+      const panels = container.querySelectorAll<HTMLElement>(panelSelector);
+
+      tabButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.tab;
+
+          tabButtons.forEach((b) => {
+            const isActive = b === button;
+            b.classList.toggle("is-active", isActive);
+            b.setAttribute("aria-selected", String(isActive));
+          });
+
+          panels.forEach((panel) => {
+            panel.hidden = panel.dataset.panel !== target;
+          });
+        });
+      });
+    }
+
+    document.querySelectorAll(".hero__panel").forEach((el) => {
+      wireTabs(el, ".hero-tabs__item[data-tab]", ".hero-panel[data-panel]");
+    });
+    document.querySelectorAll(".welcome-panel").forEach((el) => {
+      wireTabs(el, ".welcome-panel__tabs button[data-tab]", ".welcome-panel__body[data-panel]");
+    });
+
+    // ---- Guide slider: horizontal scroll-snap, no carousel library ----
+    const guideTrack = document.querySelector<HTMLElement>(".guide-track");
+    const slideButtons = document.querySelectorAll<HTMLButtonElement>(".guide-nav__btn[data-slide]");
+
+    function updateSlideButtons() {
+      if (!guideTrack) return;
+      const atStart = guideTrack.scrollLeft <= 4;
+      const atEnd = guideTrack.scrollLeft >= guideTrack.scrollWidth - guideTrack.clientWidth - 4;
+      slideButtons.forEach((button) => {
+        button.disabled = button.dataset.slide === "prev" ? atStart : atEnd;
+      });
+    }
+
+    slideButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!guideTrack) return;
+        const card = guideTrack.querySelector<HTMLElement>(".guide-card");
+        const amount = (card?.getBoundingClientRect().width ?? 280) + 18;
+        guideTrack.scrollBy({ left: button.dataset.slide === "prev" ? -amount : amount, behavior: "smooth" });
+      });
+    });
+
+    guideTrack?.addEventListener("scroll", updateSlideButtons, { passive: true });
+    updateSlideButtons();
+
+    // ---- Hero search: Departures/Arrivals (by airport code) and Flight
+    // Status (by flight number) — all three post to the same
+    // /api/flight-search endpoint with different fixed params, since LOS is
+    // always one side of the departure/arrival query.
+    function escapeHtml(value: string): string {
+      return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+    }
+
+    function renderFlightResult(container: HTMLElement, body: { status: string; flights?: unknown[]; message?: string }) {
+      if (body.status === "no-results") {
+        container.innerHTML = `<p class="flight-board__empty">No matching flights found.</p>`;
+        return;
+      }
+      if (body.status === "rate-limited") {
+        container.innerHTML = `<p class="flight-board__empty">Flight data is temporarily unavailable (rate limited). Please try again shortly.</p>`;
+        return;
+      }
+      if (body.status === "error") {
+        container.innerHTML = `<p class="flight-board__empty">${escapeHtml(body.message ?? "Flight status is temporarily unavailable.")}</p>`;
+        return;
+      }
+
+      const rows = (body.flights ?? [])
+        .map((raw) => {
+          const f = raw as {
+            flight?: { iata?: string };
+            airline?: { name?: string };
+            departure?: { airport?: string; iata?: string };
+            arrival?: { airport?: string; iata?: string };
+            flight_status?: string;
+          };
+          const flightNumber = escapeHtml(f.flight?.iata ?? "—");
+          const airline = escapeHtml(f.airline?.name ?? "—");
+          const from = escapeHtml(f.departure?.airport ?? f.departure?.iata ?? "—");
+          const to = escapeHtml(f.arrival?.airport ?? f.arrival?.iata ?? "—");
+          const status = escapeHtml(f.flight_status ?? "—");
+          return `<tr><td>${flightNumber}</td><td>${airline}</td><td>${from}</td><td>${to}</td><td class="flight-board__status">${status}</td></tr>`;
+        })
+        .join("");
+
+      container.innerHTML = `<table class="flight-board"><thead><tr><th scope="col">Flight</th><th scope="col">Airline</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    const heroSearchQuery: Record<string, (value: string) => URLSearchParams> = {
+      departure: (value) => new URLSearchParams({ depIata: "LOS", arrIata: value }),
+      arrival: (value) => new URLSearchParams({ depIata: value, arrIata: "LOS" }),
+      status: (value) => new URLSearchParams({ flightNumber: value }),
+    };
+
+    document.querySelectorAll<HTMLFormElement>("form[data-hero-search]").forEach((form) => {
+      const searchId = form.dataset.heroSearch ?? "";
+      const buildQuery = heroSearchQuery[searchId];
+      const input = document.getElementById(`hero-search-${searchId}-input`) as HTMLInputElement | null;
+      const submit = document.getElementById(`hero-search-${searchId}-submit`);
+      const result = document.getElementById(`hero-search-${searchId}-result`);
+      if (!buildQuery || !input || !submit || !result) return;
+
+      async function runSearch() {
+        const value = input!.value.trim().toUpperCase();
+        if (!value) {
+          result!.innerHTML = `<p class="flight-board__empty">Enter ${searchId === "status" ? "a flight number" : "an airport code"}.</p>`;
+          return;
+        }
+
+        result!.innerHTML = `<p class="flight-board__empty">Searching…</p>`;
+
+        try {
+          const res = await fetch(`/api/flight-search?${buildQuery(value).toString()}`);
+          renderFlightResult(result!, await res.json());
+        } catch {
+          result!.innerHTML = `<p class="flight-board__empty">Network error — please try again.</p>`;
+        }
+      }
+
+      submit.addEventListener("click", runSearch);
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        runSearch();
+      });
+    });
+  </script>
+</BaseLayout>

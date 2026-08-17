@@ -1,0 +1,41 @@
+---
+// Hand-built directory page (not a single WP record) — lists every page
+// using an "airlines-child.php" template, regardless of where each one
+// sits in the page tree. Airlines pages are flat now (no airlines-parent.php
+// section-parent above them) — this still works unchanged either way, since
+// getPagesByTemplateSuffix matches by template, not by tree position.
+// "airlines" is reserved in RESERVED_SLUGS (wp.ts) so a WP page can never
+// shadow this route.
+export const prerender = false;
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { getPagesByTemplateSuffix } from "../lib/wp";
+
+const airlines = await getPagesByTemplateSuffix("airlines-child.php");
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<BaseLayout title="Airlines — LOS Airport" description="Airlines operating at LOS Airport.">
+  <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Airlines" }]} />
+  <h1 class="text-3xl font-bold mb-6">Airlines</h1>
+
+  {airlines.length > 0 ? (
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {airlines.map((page) => (
+        <a href={`/${page.fullPath}`} class="ticket-stub">
+          <span class="ticket-stub__main">{page.title}</span>
+          <span class="ticket-stub__tear" aria-hidden="true"></span>
+          <span class="ticket-stub__end" aria-hidden="true">
+            <svg class="ticket-stub__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" />
+            </svg>
+          </span>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p class="text-ink/70">No airlines listed yet.</p>
+  )}
+</BaseLayout>

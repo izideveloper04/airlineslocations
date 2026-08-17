@@ -1,0 +1,44 @@
+---
+// Hand-built listing page (not a single WP record) — lists published WP
+// posts as cards, newest first. "blog" is reserved in RESERVED_SLUGS
+// (wp.ts) so a WP page can never shadow this route. Each card links to
+// src/pages/blog/[slug].astro for the full post. Reuses the same
+// .news-grid/.news-card styling as the homepage's "News and Promotions"
+// section (src/styles/global.css) so a post looks the same whether it's
+// found there or on this full listing.
+export const prerender = false;
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import { getPosts } from "../lib/wp";
+import fallbackImage from "../assets/images/airpp.webp";
+
+const posts = await getPosts();
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<BaseLayout title="Blog — LOS Airport" description="News and updates from LOS Airport.">
+  <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
+  <h1 class="text-3xl font-bold mb-6">Blog</h1>
+
+  {posts.length > 0 ? (
+    <div class="news-grid">
+      {posts.map((post) => (
+        <article class="news-card">
+          <a href={`/blog/${post.slug}`} class="news-card__media">
+            <img src={post.featuredImage ?? fallbackImage.src} alt="" width="500" height="360" loading="lazy" decoding="async" />
+          </a>
+          <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
+          <time datetime={post.date} class="news-card__date">{dateFormatter.format(new Date(post.date))}</time>
+          <div class="news-card__excerpt" set:html={post.excerpt} />
+          <a href={`/blog/${post.slug}`} class="news-card__cta">Read more →</a>
+        </article>
+      ))}
+    </div>
+  ) : (
+    <p class="news-section__empty">No posts published yet.</p>
+  )}
+</BaseLayout>

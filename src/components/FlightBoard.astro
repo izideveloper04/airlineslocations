@@ -1,0 +1,48 @@
+---
+import type { AirportBoardResult } from "../lib/aviationstack";
+import { formatScheduledTime } from "../lib/aviationstack";
+
+interface Props {
+  result: AirportBoardResult;
+  direction: "departure" | "arrival";
+}
+
+const { result, direction } = Astro.props;
+const otherLabel = direction === "departure" ? "Destination" : "Origin";
+
+const emptyMessage =
+  result.status === "no-results"
+    ? `No ${direction === "departure" ? "departures" : "arrivals"} found right now.`
+    : result.status === "rate-limited"
+      ? "Flight data is temporarily unavailable (rate limited). Please try again shortly."
+      : "Flight status is temporarily unavailable.";
+---
+
+{
+  result.status === "ok" ? (
+    <table class="flight-board">
+      <thead>
+        <tr>
+          <th scope="col">Flight</th>
+          <th scope="col">Airline</th>
+          <th scope="col">{otherLabel}</th>
+          <th scope="col">Time</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {result.flights.map((flight) => (
+          <tr>
+            <td>{flight.flightNumber ?? "—"}</td>
+            <td>{flight.airline ?? "—"}</td>
+            <td>{flight.otherAirport ?? flight.otherAirportIata ?? "—"}</td>
+            <td>{formatScheduledTime(flight.scheduled)}</td>
+            <td class="flight-board__status">{flight.status ?? "—"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    <p class="flight-board__empty">{emptyMessage}</p>
+  )
+}

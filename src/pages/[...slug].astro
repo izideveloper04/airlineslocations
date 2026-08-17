@@ -1,0 +1,54 @@
+---
+// Catch-all for WordPress-sourced content pages. Rendered live per-request
+// (Node, via Hostinger's Node.js App) rather than prerendered — WP content
+// is fetched through the TTL-cached page tree in src/lib/wp.ts, so an editor
+// publishing a page shows up within PAGE_TREE_CACHE_TTL seconds with no
+// rebuild/redeploy step at all.
+export const prerender = false;
+
+import { getPageTree, getPageByPath, getSiteSettings, resolvePageMeta, isParentTemplate, isChildTemplate } from "../lib/wp";
+import ParentPageLayout from "../layouts/ParentPageLayout.astro";
+import ChildPageLayout from "../layouts/ChildPageLayout.astro";
+import DefaultPageLayout from "../layouts/DefaultPageLayout.astro";
+
+// Freshness is governed entirely by the app-level cache in src/lib/wp.ts
+// (TTL + webhook purge) — an upstream proxy/CDN caching this HTML on top of
+// that would reintroduce the stale-page delay the webhook exists to remove.
+// Set before the not-found branch below (not just on the success path) —
+// otherwise a CDN can cache a 404 for a page that was published moments
+// later, and that 404 keeps being served regardless of origin-side purges.
+Astro.response.headers.set("Cache-Control", "no-store");
+
+const requestedPath = Astro.params.slug ?? "";
+const page = await getPageByPath(Array.isArray(requestedPath) ? requestedPath.join("/") : requestedPath);
+
+if (!page) {
+  return Astro.rewrite("/404");
+}
+
+const tree = await getPageTree();
+const siteSettings = await getSiteSettings();
+const meta = resolvePageMeta(page, siteSettings);
+
+// The "class" that drives layout selection — driven entirely by the fetched
+// template field, never by URL depth. This is a naming *convention*, not an
+// exact-match table: any WP template file ending in "parent.php" (bare, or
+// prefixed like "parking-parent.php", "page-templates/parent.php") gets
+// ParentPageLayout, anything ending in "child.php" gets ChildPageLayout.
+// A brand-new section (e.g. Parking, Terminals, Map) therefore needs no
+// change here at all — just assign it a "<section>-parent.php" /
+// "<section>-child.php" template pair in WP and it renders correctly
+// immediately. Section membership itself comes from WP's native page
+// `parent` field (via getChildren/getAncestorChain in wp.ts), not from
+// parsing the template name, so this suffix check is the only place the
+// naming convention actually matters.
+// Unrecognized templates (including no template at all) fall through to
+// the default layout rather than throwing or blank-paging.
+const Layout = isParentTemplate(page.template)
+  ? ParentPageLayout
+  : isChildTemplate(page.template)
+    ? ChildPageLayout
+    : DefaultPageLayout;
+---
+
+<Layout page={page} tree={tree} meta={meta} />

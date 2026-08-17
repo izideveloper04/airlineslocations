@@ -1,0 +1,42 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import RelatedPages from "../components/RelatedPages.astro";
+import type { WPPage, PageTree, ResolvedPageMeta } from "../lib/wp";
+import { getAncestorChain, getChildren } from "../lib/wp";
+
+interface Props {
+  page: WPPage;
+  tree: PageTree;
+  meta: ResolvedPageMeta;
+}
+
+const { page, tree, meta } = Astro.props;
+const ancestors = getAncestorChain(page, tree);
+const children = await getChildren(page.id);
+
+const breadcrumbItems = [
+  { label: "Home", href: "/" },
+  ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
+  { label: page.title },
+];
+---
+
+<BaseLayout
+  title={meta.title}
+  description={meta.description}
+  canonical={meta.canonical}
+  ogTitle={meta.ogTitle}
+  ogDescription={meta.ogDescription}
+  ogImage={meta.ogImage}
+>
+  <!-- Hero: title + breadcrumb only — this template is a directory page,
+       not a content page, so page.content is deliberately never rendered
+       here. No sidebar either; children render as a card grid below. -->
+  <header class="border-b border-ink/10 pb-6 mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold mb-4">{page.title}</h1>
+    <Breadcrumbs items={breadcrumbItems} />
+  </header>
+
+  <RelatedPages pages={children} />
+</BaseLayout>

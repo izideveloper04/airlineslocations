@@ -1,0 +1,1047 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Self-hosted, not the Google Fonts CDN — README.md's own Non-goals section
+   rules out CDN-hosted fonts. Fraunces is SIL Open Font License, which
+   explicitly permits exactly this (downloading and bundling the file into
+   the project). Single variable-font file covers the whole 400–700 weight
+   range used across the site, so one @font-face with a weight range is
+   enough — no need for 4 separate static-weight files. Drop the actual
+   woff2 files into src/assets/fonts/ — referenced here by relative path so
+   Vite fingerprints/copies them at build time. */
+@font-face {
+  font-family: "Fraunces";
+  src: url("../assets/fonts/fraunces-variable.woff2") format("woff2-variations");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/inter-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/inter-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* LOS brand — deep Nigerian green + gold, matching the LAX-derived
+       architecture but with LOS's own identity. Change these to re-theme
+       the whole site; no tailwind.config edits required. */
+    --brand: #036a32;
+    --brand-dark: #023d1d;
+    --brand-light: #4ca771;
+    --accent: #f5a623;
+    --accent-dark: #c97f0e;
+    --ink: #12231a;
+    --surface: #f7f3e9;
+    --line: rgba(18, 35, 26, 0.12);
+
+    --font-display: "Fraunces", ui-serif, Georgia, serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+    --shadow-sm: 0 1px 2px rgba(18, 35, 26, 0.06), 0 1px 3px rgba(18, 35, 26, 0.08);
+    --shadow-md: 0 4px 12px rgba(18, 35, 26, 0.1), 0 2px 4px rgba(18, 35, 26, 0.06);
+
+    /* Homepage section tokens (src/pages/index.astro) — aliased onto the
+       LOS brand palette above so the hero/guide/news sections theme with
+       the rest of the site instead of carrying their own palette. */
+    --color-navy: var(--ink);
+    --color-blue: var(--brand);
+    --color-blue-dark: var(--brand-dark);
+    --color-yellow: var(--accent);
+    --color-panel-bg: color-mix(in srgb, var(--brand-light) 14%, white);
+    --color-access-bg: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    --color-border: var(--line);
+    --color-text: var(--ink);
+    --color-text-muted: rgba(18, 35, 26, 0.65);
+    --color-white: #ffffff;
+
+    --container-width: 1180px;
+
+    /* Shared size for every homepage section heading (Welcome, Guide,
+       Essentials, Info, Accessibility, News) — they're peers in the same
+       visual hierarchy and should read as one consistent scale, not five
+       different sizes plus a tiny all-caps outlier. */
+    --h2-size: clamp(1.75rem, 1.35rem + 1.8vw, 2.25rem);
+  }
+
+  html {
+    /* Safety net, not a workaround for content that's supposed to overflow:
+       nothing on this site is ever meant to scroll horizontally. The
+       homepage (src/pages/index.astro) opts into BaseLayout's `fullBleed`
+       prop to get an edge-to-edge <main> for its hero/section backgrounds
+       instead of the default max-w-5xl container.
+       `clip`, not `hidden`: setting overflow-x to anything but `visible`
+       forces overflow-y to compute to `auto` too (per the CSS overflow
+       spec's axis-pairing rule) — which turns this element into a scroll
+       container and breaks `position: sticky` for every descendant on the
+       page, since sticky elements stick relative to the nearest such
+       container instead of the real viewport. `clip` was added to CSS
+       specifically to allow one-axis clipping without that side effect. */
+    overflow-x: clip;
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Visible keyboard focus everywhere — quality floor, not optional. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* ---- Signature element: ticket-stub row, used for the Airlines list ----
+     Two circular "punches" cut to the page background color plus a dashed
+     tear line — reads like an actual boarding-pass row rather than a
+     generic card. */
+  .ticket-stub {
+    position: relative;
+    display: flex;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .ticket-stub:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .ticket-stub::before,
+  .ticket-stub::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.1rem;
+    height: 1.1rem;
+    background: var(--surface);
+    border-radius: 9999px;
+    z-index: 1;
+  }
+
+  .ticket-stub::before {
+    right: calc(3.5rem - 0.55rem);
+  }
+
+  .ticket-stub::after {
+    left: -0.55rem;
+    display: none;
+  }
+
+  .ticket-stub__tear {
+    width: 0;
+    border-left: 1.5px dashed var(--line);
+    margin: 0.75rem 0;
+  }
+
+  .ticket-stub__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+  }
+
+  .ticket-stub__end {
+    background: var(--surface);
+    width: 3.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ticket-stub__icon {
+    width: 20px;
+    height: 20px;
+    color: var(--brand);
+  }
+
+  /* Hero flight-route art */
+  .route-pulse {
+    animation: route-pulse 2.4s ease-out infinite;
+    transform-origin: center;
+  }
+
+  .route-plane {
+    animation: route-fade 7s linear infinite;
+  }
+}
+
+@keyframes route-pulse {
+  0% {
+    r: 7;
+    opacity: 0.5;
+  }
+  100% {
+    r: 22;
+    opacity: 0;
+  }
+}
+
+@keyframes route-fade {
+  0%, 4% { opacity: 0; }
+  8%, 92% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-pulse,
+  .route-plane,
+  .route-art animateMotion {
+    animation: none !important;
+  }
+}
+
+/* Typography defaults for WP block-editor HTML rendered via set:html.
+   WP core CSS isn't present here, so this scoped layer replaces it. */
+.prose {
+  @apply max-w-3xl;
+  color: var(--ink);
+}
+
+.prose :where(h1, h2, h3, h4) {
+  font-family: var(--font-display);
+  @apply font-semibold mt-8 mb-4 leading-tight;
+  color: var(--ink);
+}
+
+.prose h1 {
+  @apply text-3xl;
+}
+.prose h2 {
+  @apply text-2xl;
+}
+.prose h3 {
+  @apply text-xl;
+}
+
+.prose p {
+  @apply my-4 leading-relaxed;
+}
+
+.prose a {
+  color: var(--brand);
+  @apply underline underline-offset-2;
+}
+.prose a:hover {
+  color: var(--brand-dark);
+}
+
+.prose ul {
+  @apply list-disc pl-6 my-4;
+}
+.prose ol {
+  @apply list-decimal pl-6 my-4;
+}
+
+.prose img {
+  @apply my-6 rounded max-w-full h-auto;
+}
+
+.prose figure {
+  @apply my-6;
+}
+.prose figcaption {
+  @apply text-sm mt-2;
+  color: rgba(18, 35, 26, 0.7);
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--brand-light);
+  @apply pl-4 italic my-6;
+  color: rgba(18, 35, 26, 0.8);
+}
+
+.prose table {
+  @apply w-full border-collapse my-6;
+}
+.prose th,
+.prose td {
+  border: 1px solid var(--line);
+  @apply px-3 py-2 text-left;
+}
+
+
+
+/*Homepage CSS start here*/
+/* ==========================================================
+   LOS — Homepage Content Styles
+   Scope: everything below lives inside <main> (src/pages/index.astro).
+   Selectors are class-based only (no bare `div`, `section`, `button`,
+   etc.) so nothing here can leak into an existing header/footer.
+   Colors resolve through the --color-* aliases defined in the :root
+   block above, which point at the shared LOS brand tokens.
+========================================================== */
+
+/* ---------- reset-ish base (scoped to main) ---------- */
+main {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  /* clip, not hidden — see the html rule's comment above for why. */
+  overflow-x: clip;
+}
+
+main * {
+  box-sizing: border-box;
+}
+
+main img {
+  max-width: 100%;
+  display: block;
+}
+
+main h1,
+main h2,
+main h3 {
+  color: var(--color-navy);
+  margin: 0;
+  line-height: 1.15;
+}
+
+main p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+main a {
+  color: var(--color-blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+main a:hover {
+  text-decoration: underline;
+}
+
+main button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* generic button used in info-section / accessibility */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 22px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn--primary {
+  background: var(--color-blue);
+  color: var(--color-white);
+}
+.btn--primary:hover {
+  background: var(--color-blue-dark);
+  text-decoration: none;
+}
+
+.btn--outline {
+  background: var(--color-white);
+  color: var(--color-blue);
+  border: 1.5px solid var(--color-blue);
+}
+.btn--outline:hover {
+  background: #f2f6ff;
+  text-decoration: none;
+}
+
+/* .ticket-stub (Airlines grid, @layer components above) is styled to look
+   like a physical boarding-pass stub, not an inline text link — this has
+   to sit outside any @layer block to win, since unlayered rules always
+   beat layered ones regardless of specificity, and `main a` below is
+   unlayered too. */
+.ticket-stub {
+  color: var(--ink);
+}
+
+.ticket-stub:hover {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+/* ==========================================================
+   1. HERO
+========================================================== */
+.hero {
+  position: relative;
+}
+
+.hero__bg {
+  position: relative;
+  height: 480px;
+  overflow: hidden;
+}
+
+.hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+}
+
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 10, 40, 0.15) 0%, rgba(0, 10, 40, 0) 40%, rgba(0, 10, 40, 0.05) 100%);
+}
+
+/* h1 + search panel in normal flow together (see index.astro) — pulling
+   this one wrapper up over the image with a single margin-top moves both
+   pieces as one unit at every screen size, instead of positioning each
+   separately and hoping the numbers stay in sync between them. */
+.hero__content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+  margin-top: -270px;
+}
+
+.hero__wordmark {
+  margin: 0;
+  margin-bottom: -18px;
+  font-size: clamp(3rem, -0.5rem + 11.9vw, 9rem);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--color-white);
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.hero__panel {
+  margin: 0 auto;
+  background: var(--color-white);
+  border-radius: 10px;
+  box-shadow: 0 20px 45px rgba(15, 25, 60, 0.18);
+  padding: 26px 32px 30px;
+}
+
+.hero-tabs {
+  display: flex;
+  gap: 30px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 18px;
+}
+
+.hero-tabs__item {
+  background: none;
+  border: none;
+  padding: 4px 2px 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.hero-tabs__item.is-active {
+  color: var(--color-navy);
+  border-bottom: 3px solid var(--color-navy);
+  margin-bottom: -1px;
+}
+
+.hero-panel[hidden] {
+  display: none;
+}
+
+/* ---- Flight board / search result table (also used by FlightBoard.astro
+   and the client-rendered Flight Status search result) ---- */
+.flight-board {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.flight-board thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.flight-board tbody td {
+  padding: 10px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.flight-board tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.flight-board__status {
+  text-transform: capitalize;
+}
+
+.flight-board__empty {
+  font-size: 0.9rem;
+  padding: 20px 4px;
+  text-align: center;
+}
+
+/* ==========================================================
+   2. WELCOME + SECURITY
+========================================================== */
+.welcome-section {
+  padding: 90px 24px 70px;
+}
+
+.welcome-section__inner {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.welcome-content h2 {
+  font-size: var(--h2-size);
+  max-width: 480px;
+  margin-bottom: 18px;
+}
+
+.welcome-content p {
+  font-size: 1.05rem;
+}
+
+.welcome-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 28px 0 26px;
+}
+
+.welcome-stats__value {
+  display: block;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  line-height: 1.1;
+}
+
+.welcome-stats__label {
+  display: block;
+  max-width: 160px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Right-hand column of the welcome section — live departures/arrivals,
+   reusing the .flight-board table styles shared with the hero panels and
+   the Flight Status search result. */
+.welcome-panel {
+  background: var(--color-panel-bg);
+  border-radius: 10px;
+  padding: 26px 28px 22px;
+}
+
+.welcome-panel__tabs {
+  display: flex;
+  gap: 26px;
+  margin-bottom: 20px;
+}
+
+.welcome-panel__tabs button {
+  background: none;
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  padding-bottom: 8px;
+}
+
+.welcome-panel__tabs button.is-active {
+  color: var(--color-navy);
+  border-bottom: 3px solid var(--color-navy);
+}
+
+.welcome-panel .flight-board {
+  background: var(--color-white);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.welcome-panel .flight-board thead th {
+  background: var(--color-navy);
+  color: var(--color-white);
+  border-bottom: none;
+  padding: 10px 14px;
+}
+
+.welcome-panel .flight-board tbody td {
+  padding: 12px 14px;
+}
+
+/* ==========================================================
+   3. GUIDE SECTION
+========================================================== */
+.guide-section {
+  padding: 40px 24px 60px;
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+.guide-section__header h2 {
+  font-size: var(--h2-size);
+  max-width: 320px;
+  margin-bottom: 26px;
+}
+
+/* Horizontal scroll-snap slider — no carousel library. Card width is fixed
+   via flex-basis so the JS nav buttons can scroll by exactly one card. */
+.guide-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.guide-track::-webkit-scrollbar {
+  display: none;
+}
+
+.guide-card {
+  position: relative;
+  display: block;
+  flex: 0 0 clamp(200px, 24vw, 280px);
+  scroll-snap-align: start;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 5 / 5.6;
+}
+
+.guide-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.guide-card:hover img {
+  transform: scale(1.05);
+}
+
+.guide-card__overlay {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.guide-card__overlay span:first-child {
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.guide-card__arrow {
+  color: var(--color-white);
+  font-size: 1.1rem;
+}
+
+.guide-nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.guide-nav__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-white);
+  color: var(--color-blue);
+}
+
+.guide-nav__btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.guide-nav__btn:not(:disabled):hover {
+  border-color: var(--color-blue);
+  background: #eef4ff;
+}
+
+.guide-nav__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* ==========================================================
+   4. ESSENTIALS
+========================================================== */
+.essentials {
+  padding: 20px 24px 70px;
+  max-width: var(--container-width);
+  margin: 0 auto;
+}
+
+.essentials h2 {
+  font-size: var(--h2-size);
+  margin-bottom: 26px;
+}
+
+.essentials__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.essentials__card {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.essentials__card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.essentials__body {
+  padding: 18px 20px 22px;
+}
+
+.essentials__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-navy);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.essentials__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.essentials__desc {
+  font-size: 0.9rem;
+  margin-bottom: 14px;
+}
+
+/* ==========================================================
+   5. INFO / ALERT SECTION
+========================================================== */
+.info-section {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 20px 24px 70px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.info-section__eyebrow {
+  text-transform: uppercase;
+  color: var(--color-blue);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.info-section__text h2 {
+  font-size: var(--h2-size);
+  max-width: 460px;
+}
+
+.info-section__aside p {
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.info-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ==========================================================
+   6. ACCESSIBILITY
+========================================================== */
+.accessibility {
+  background: var(--color-access-bg);
+}
+
+/* Background band stays full-bleed; the content grid inside is capped to
+   the same container width as every other section so it doesn't hug the
+   far-left edge on wide screens. */
+.accessibility__inner {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 0;
+}
+
+.accessibility__content {
+  padding: 60px 24px 60px 60px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.accessibility__content h2 {
+  font-size: var(--h2-size);
+  margin-bottom: 16px;
+}
+
+.accessibility__content p {
+  font-size: 0.95rem;
+  margin-bottom: 22px;
+}
+
+.accessibility__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.accessibility__image img {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  object-fit: cover;
+}
+
+/* ==========================================================
+   7. NEWS AND PROMOTIONS
+========================================================== */
+.news-section {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 70px 24px 90px;
+}
+
+.news-section > h2 {
+  font-size: var(--h2-size);
+  margin-bottom: 26px;
+}
+
+.news-section__empty {
+  font-size: 0.95rem;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.news-card {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 18px;
+}
+
+.news-card__media {
+  display: block;
+}
+
+.news-card__media img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.news-card h3 {
+  font-size: 1rem;
+  padding: 16px 16px 0;
+}
+
+.news-card__date {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding: 4px 16px 0;
+}
+
+.news-card__excerpt {
+  font-size: 0.82rem;
+  padding: 8px 16px 12px;
+  flex: 1;
+}
+
+/* Dedicated class instead of a bare `.news-card a` — that matched every
+   anchor in the card, including the thumbnail/title links added later,
+   and leaked this padding onto them too. */
+.news-card__cta {
+  padding: 0 16px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .welcome-section__inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .essentials__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .info-section {
+    grid-template-columns: 1fr;
+  }
+
+  .accessibility__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .accessibility__content {
+    padding: 50px 24px 30px;
+    margin: 0;
+    max-width: none;
+  }
+
+  .accessibility__image img {
+    min-height: 260px;
+  }
+
+  .news-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .hero__bg {
+    height: 360px;
+  }
+
+  .hero__content {
+    margin-top: -70px;
+  }
+
+  .hero__panel {
+    margin: 0 16px;
+    padding: 20px 18px 24px;
+    border-radius: 8px;
+  }
+
+  .hero-tabs {
+    gap: 16px;
+    overflow-x: auto;
+  }
+
+  .hero-tabs__item {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .welcome-section {
+    padding: 60px 18px 40px;
+  }
+
+  .welcome-panel {
+    padding: 20px 16px 18px;
+  }
+
+  .welcome-panel .flight-board thead th,
+  .welcome-panel .flight-board tbody td {
+    padding: 9px 8px;
+    font-size: 0.78rem;
+  }
+
+  .guide-section {
+    padding: 30px 18px 40px;
+  }
+
+  .guide-track {
+    gap: 12px;
+  }
+
+  .essentials {
+    padding: 10px 18px 50px;
+  }
+
+  .essentials__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-section {
+    padding: 10px 18px 50px;
+  }
+
+  .accessibility__content {
+    padding: 40px 18px 24px;
+  }
+
+  .news-section {
+    padding: 50px 18px 60px;
+  }
+
+  .news-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*Homepage CSS end here*/

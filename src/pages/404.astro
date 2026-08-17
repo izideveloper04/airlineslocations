@@ -1,0 +1,28 @@
+---
+// Must be on-demand (not prerendered): [...slug].astro is SSR and reaches
+// this page via Astro.rewrite("/404") for any unmatched WP path. A
+// prerendered route isn't part of the live server's route table, so an SSR
+// rewrite into it throws instead of rendering — hence must match here.
+export const prerender = false;
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// A rewrite doesn't inherit a real 404 status on its own — without this,
+// visitors and crawlers would get a "not found" page served as HTTP 200.
+Astro.response.status = 404;
+
+// Set here too, not just in [...slug].astro before the rewrite — a rewrite
+// renders this page fresh and it's not guaranteed to inherit headers set by
+// the caller. Without this, a CDN can cache a 404 for a page that gets
+// published moments later, and keep serving that 404 forever regardless of
+// origin-side cache purges (this is what was actually happening).
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<BaseLayout title="Page not found — LOS Airport">
+  <div class="text-center py-16">
+    <h1 class="text-3xl font-bold mb-4">Page not found</h1>
+    <p class="text-ink/70 mb-6">The page you're looking for doesn't exist or has moved.</p>
+    <a href="/" class="text-brand underline">Back to home</a>
+  </div>
+</BaseLayout>
