@@ -12,7 +12,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import { getPagesByTemplateSuffix } from "../lib/wp";
 
-const airlines = await getPagesByTemplateSuffix("airlines-child.php");
+const airlines = await getPagesByTemplateSuffix("airlines-parent.php");
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
