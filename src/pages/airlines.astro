@@ -14,6 +14,12 @@ import { getPagesByTemplateSuffix } from "../lib/wp";
 
 const airlines = await getPagesByTemplateSuffix("airlines-parent.php");
 
+// Backs the homepage hero's search box (GET /airlines?q=...) as well as an
+// on-page search here — filtered server-side since the full list is
+// already fetched, no separate search endpoint needed.
+const query = Astro.url.searchParams.get("q")?.trim() ?? "";
+const results = query ? airlines.filter((page) => page.title.toLowerCase().includes(query.toLowerCase())) : airlines;
+
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
@@ -21,9 +27,25 @@ Astro.response.headers.set("Cache-Control", "no-store");
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Airlines" }]} />
   <h1 class="text-3xl font-bold mb-6">Airlines</h1>
 
-  {airlines.length > 0 ? (
+  <form class="mb-6 flex gap-2 max-w-sm" method="get">
+    <label for="airlines-search-input" class="sr-only">Search airlines by name</label>
+    <input
+      id="airlines-search-input"
+      type="text"
+      name="q"
+      value={query}
+      placeholder="Search airlines by name…"
+      autocomplete="off"
+      class="flex-1 min-w-0 border border-ink/15 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+    />
+    <button type="submit" class="bg-brand text-white rounded-md px-4 py-2 text-sm font-semibold hover:bg-brand-dark transition-colors">
+      Search
+    </button>
+  </form>
+
+  {results.length > 0 ? (
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {airlines.map((page) => (
+      {results.map((page) => (
         <a href={`/${page.fullPath}`} class="ticket-stub">
           <span class="ticket-stub__main">{page.title}</span>
           <span class="ticket-stub__tear" aria-hidden="true"></span>
@@ -35,6 +57,8 @@ Astro.response.headers.set("Cache-Control", "no-store");
         </a>
       ))}
     </div>
+  ) : query ? (
+    <p class="text-ink/70">No airlines matching "{query}".</p>
   ) : (
     <p class="text-ink/70">No airlines listed yet.</p>
   )}

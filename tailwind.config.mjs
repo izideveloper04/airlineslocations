@@ -13,16 +13,16 @@ export default {
       // needs a real color value, not a CSS variable, to composite alpha.
       colors: {
         brand: {
-          DEFAULT: "#036a32",
-          dark: "#023d1d",
-          light: "#4ca771",
+          DEFAULT: "#1d4ed8",
+          dark: "#1e3a8a",
+          light: "#60a5fa",
         },
         accent: {
-          DEFAULT: "#f5a623",
-          dark: "#c97f0e",
+          DEFAULT: "#f97316",
+          dark: "#c2410c",
         },
-        ink: "#12231a",
-        surface: "#f7f3e9",
+        ink: "#0f172a",
+        surface: "#f4f7fb",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],

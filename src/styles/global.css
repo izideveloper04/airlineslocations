@@ -28,27 +28,29 @@
 
 @layer base {
   :root {
-    /* LOS brand — deep Nigerian green + gold, matching the LAX-derived
-       architecture but with LOS's own identity. Change these to re-theme
-       the whole site; no tailwind.config edits required. */
-    --brand: #036a32;
-    --brand-dark: #023d1d;
-    --brand-light: #4ca771;
-    --accent: #f5a623;
-    --accent-dark: #c97f0e;
-    --ink: #12231a;
-    --surface: #f7f3e9;
-    --line: rgba(18, 35, 26, 0.12);
+    /* Airlines Locations brand — blue/teal, with a warm orange accent for
+       CTAs. Change these to re-theme the whole site; no tailwind.config
+       edits required. */
+    --brand: #1d4ed8;
+    --brand-dark: #1e3a8a;
+    --brand-light: #60a5fa;
+    --teal: #0d9488;
+    --teal-dark: #115e59;
+    --accent: #f97316;
+    --accent-dark: #c2410c;
+    --ink: #0f172a;
+    --surface: #f4f7fb;
+    --line: rgba(15, 23, 42, 0.1);
 
     --font-display: "Fraunces", ui-serif, Georgia, serif;
     --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-    --shadow-sm: 0 1px 2px rgba(18, 35, 26, 0.06), 0 1px 3px rgba(18, 35, 26, 0.08);
-    --shadow-md: 0 4px 12px rgba(18, 35, 26, 0.1), 0 2px 4px rgba(18, 35, 26, 0.06);
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.06);
 
     /* Homepage section tokens (src/pages/index.astro) — aliased onto the
-       LOS brand palette above so the hero/guide/news sections theme with
-       the rest of the site instead of carrying their own palette. */
+       brand palette above so the hero/guide/news sections theme with the
+       rest of the site instead of carrying their own palette. */
     --color-navy: var(--ink);
     --color-blue: var(--brand);
     --color-blue-dark: var(--brand-dark);
@@ -57,15 +59,15 @@
     --color-access-bg: color-mix(in srgb, var(--accent) 12%, var(--surface));
     --color-border: var(--line);
     --color-text: var(--ink);
-    --color-text-muted: rgba(18, 35, 26, 0.65);
+    --color-text-muted: rgba(15, 23, 42, 0.65);
     --color-white: #ffffff;
 
     --container-width: 1180px;
 
-    /* Shared size for every homepage section heading (Welcome, Guide,
-       Essentials, Info, Accessibility, News) — they're peers in the same
-       visual hierarchy and should read as one consistent scale, not five
-       different sizes plus a tiny all-caps outlier. */
+    /* Shared size for every homepage section heading (Welcome, Featured
+       Airlines, Why Us, How It Works, For Airlines, Blog) — they're peers
+       in the same visual hierarchy and should read as one consistent
+       scale, not five different sizes plus a tiny all-caps outlier. */
     --h2-size: clamp(1.75rem, 1.35rem + 1.8vw, 2.25rem);
   }
 
@@ -176,14 +178,26 @@
     color: var(--brand);
   }
 
-  /* Hero flight-route art */
+  /* Hero flight-route art (src/pages/index.astro) — two pulsing location
+     dots connected by a dashed path, with a small plane icon traveling
+     between them. Driven entirely by CSS (offset-path), not SMIL, so the
+     prefers-reduced-motion override below actually applies to it. */
+  .route-art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
   .route-pulse {
     animation: route-pulse 2.4s ease-out infinite;
     transform-origin: center;
   }
 
   .route-plane {
-    animation: route-fade 7s linear infinite;
+    offset-path: path("M 30 160 Q 300 20 570 160");
+    offset-rotate: auto;
+    animation: route-travel 6s linear infinite;
   }
 }
 
@@ -198,16 +212,24 @@
   }
 }
 
-@keyframes route-fade {
-  0%, 4% { opacity: 0; }
-  8%, 92% { opacity: 1; }
-  96%, 100% { opacity: 0; }
+@keyframes route-travel {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  8%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .route-pulse,
-  .route-plane,
-  .route-art animateMotion {
+  .route-plane {
     animation: none !important;
   }
 }
@@ -263,13 +285,13 @@
 }
 .prose figcaption {
   @apply text-sm mt-2;
-  color: rgba(18, 35, 26, 0.7);
+  color: rgba(15, 23, 42, 0.7);
 }
 
 .prose blockquote {
   border-left: 4px solid var(--brand-light);
   @apply pl-4 italic my-6;
-  color: rgba(18, 35, 26, 0.8);
+  color: rgba(15, 23, 42, 0.8);
 }
 
 .prose table {
@@ -285,12 +307,12 @@
 
 /*Homepage CSS start here*/
 /* ==========================================================
-   LOS — Homepage Content Styles
+   Airlines Locations — Homepage Content Styles
    Scope: everything below lives inside <main> (src/pages/index.astro).
    Selectors are class-based only (no bare `div`, `section`, `button`,
    etc.) so nothing here can leak into an existing header/footer.
    Colors resolve through the --color-* aliases defined in the :root
-   block above, which point at the shared LOS brand tokens.
+   block above, which point at the shared brand tokens.
 ========================================================== */
 
 /* ---------- reset-ish base (scoped to main) ---------- */
@@ -407,11 +429,10 @@ main button {
   overflow: hidden;
 }
 
-.hero__bg img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
+/* Gradient + decorative route art instead of a photo — no dependency on a
+   specific WP media file existing. */
+.hero__bg--gradient {
+  background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 55%, var(--teal) 100%);
 }
 
 .hero__scrim {
@@ -421,26 +442,43 @@ main button {
 }
 
 /* h1 + search panel in normal flow together (see index.astro) — pulling
-   this one wrapper up over the image with a single margin-top moves both
-   pieces as one unit at every screen size, instead of positioning each
-   separately and hoping the numbers stay in sync between them. */
+   this one wrapper up over the gradient band with a single margin-top
+   moves both pieces as one unit at every screen size, instead of
+   positioning each separately and hoping the numbers stay in sync. */
 .hero__content {
   position: relative;
   z-index: 2;
-  max-width: 900px;
+  max-width: 720px;
   margin: 0 auto;
+  padding-top: 90px;
   margin-top: -270px;
+  text-align: center;
 }
 
-.hero__wordmark {
-  margin: 0;
-  margin-bottom: -18px;
-  font-size: clamp(3rem, -0.5rem + 11.9vw, 9rem);
-  line-height: 1;
+.hero__eyebrow {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.hero__headline {
+  margin: 0 0 16px;
+  font-size: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
+  line-height: 1.1;
   font-weight: 800;
   color: var(--color-white);
   letter-spacing: -0.02em;
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.hero__subtext {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.05rem;
+  max-width: 540px;
+  margin: 0 auto 32px;
 }
 
 .hero__panel {
@@ -449,72 +487,63 @@ main button {
   border-radius: 10px;
   box-shadow: 0 20px 45px rgba(15, 25, 60, 0.18);
   padding: 26px 32px 30px;
-}
-
-.hero-tabs {
-  display: flex;
-  gap: 30px;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 18px;
-}
-
-.hero-tabs__item {
-  background: none;
-  border: none;
-  padding: 4px 2px 14px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-
-.hero-tabs__item.is-active {
-  color: var(--color-navy);
-  border-bottom: 3px solid var(--color-navy);
-  margin-bottom: -1px;
-}
-
-.hero-panel[hidden] {
-  display: none;
-}
-
-/* ---- Flight board / search result table (also used by FlightBoard.astro
-   and the client-rendered Flight Status search result) ---- */
-.flight-board {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.flight-board thead th {
   text-align: left;
-  font-size: 0.75rem;
+}
+
+.hero__search {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  background: var(--surface);
+  border-radius: 9999px;
+  padding: 6px 6px 6px 20px;
+}
+
+.hero__search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.hero__search input:focus {
+  outline: none;
+}
+
+.hero__search button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--brand);
+  color: var(--color-white);
+  border: none;
+  border-radius: 9999px;
+  padding: 0 20px;
   font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.15s ease;
+}
+
+.hero__search button:hover {
+  background: var(--brand-dark);
+}
+
+.hero__search button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.hero__trust {
+  margin-top: 16px;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.flight-board tbody td {
-  padding: 10px;
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.flight-board tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.flight-board__status {
-  text-transform: capitalize;
-}
-
-.flight-board__empty {
-  font-size: 0.9rem;
-  padding: 20px 4px;
   text-align: center;
 }
 
 /* ==========================================================
-   2. WELCOME + SECURITY
+   2. WELCOME / ABOUT
 ========================================================== */
 .welcome-section {
   padding: 90px 24px 70px;
@@ -562,54 +591,53 @@ main button {
   margin-top: 4px;
 }
 
-/* Right-hand column of the welcome section — live departures/arrivals,
-   reusing the .flight-board table styles shared with the hero panels and
-   the Flight Status search result. */
+/* Right-hand column of the welcome section — a short preview list of
+   recently-added airlines, linking into the full directory. */
 .welcome-panel {
   background: var(--color-panel-bg);
   border-radius: 10px;
   padding: 26px 28px 22px;
 }
 
-.welcome-panel__tabs {
-  display: flex;
-  gap: 26px;
-  margin-bottom: 20px;
-}
-
-.welcome-panel__tabs button {
-  background: none;
-  border: none;
+.welcome-panel__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
-  padding-bottom: 8px;
+  margin-bottom: 16px;
 }
 
-.welcome-panel__tabs button.is-active {
-  color: var(--color-navy);
-  border-bottom: 3px solid var(--color-navy);
+.welcome-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.welcome-panel .flight-board {
-  background: var(--color-white);
-  border-radius: 6px;
-  overflow: hidden;
+.welcome-panel__list li {
+  border-bottom: 1px solid var(--color-border);
 }
 
-.welcome-panel .flight-board thead th {
-  background: var(--color-navy);
-  color: var(--color-white);
+.welcome-panel__list li:last-child {
   border-bottom: none;
-  padding: 10px 14px;
 }
 
-.welcome-panel .flight-board tbody td {
-  padding: 12px 14px;
+.welcome-panel__list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 4px;
+  color: var(--color-navy);
+  font-weight: 600;
+}
+
+.welcome-panel__list a:hover {
+  color: var(--color-blue);
+  text-decoration: none;
 }
 
 /* ==========================================================
-   3. GUIDE SECTION
+   3. FEATURED AIRLINES
 ========================================================== */
 .guide-section {
   padding: 40px 24px 60px;
@@ -675,9 +703,32 @@ main button {
   font-size: 1rem;
 }
 
+/* Image-free variant — used for featured-airline cards, which have no
+   photo to show. A tinted panel with the airline name instead. */
+.guide-card--plain {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px;
+  background: linear-gradient(135deg, var(--color-panel-bg), #fff);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guide-card--plain:hover {
+  border-color: var(--brand-light);
+  box-shadow: var(--shadow-md);
+}
+
+.guide-card__title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-navy);
+}
+
 .guide-card__arrow {
-  color: var(--color-white);
-  font-size: 1.1rem;
+  color: var(--color-blue);
+  font-size: 1.2rem;
 }
 
 .guide-nav {
@@ -714,7 +765,7 @@ main button {
 }
 
 /* ==========================================================
-   4. ESSENTIALS
+   4. WHY USE AIRLINES LOCATIONS
 ========================================================== */
 .essentials {
   padding: 20px 24px 70px;
@@ -739,10 +790,21 @@ main button {
   overflow: hidden;
 }
 
-.essentials__card img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
+/* Icon tile instead of a photo — no dependency on a WP media file existing
+   for a section that's now generic value-proposition copy, not a specific
+   photographed amenity. */
+.essentials__card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 140px;
+  background: linear-gradient(135deg, var(--brand), var(--teal));
+  color: var(--color-white);
+}
+
+.essentials__card-icon svg {
+  width: 40px;
+  height: 40px;
 }
 
 .essentials__body {
@@ -759,19 +821,13 @@ main button {
   margin-bottom: 8px;
 }
 
-.essentials__icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
 .essentials__desc {
   font-size: 0.9rem;
   margin-bottom: 14px;
 }
 
 /* ==========================================================
-   5. INFO / ALERT SECTION
+   5. HOW IT WORKS
 ========================================================== */
 .info-section {
   max-width: var(--container-width);
@@ -797,9 +853,33 @@ main button {
   max-width: 460px;
 }
 
-.info-section__aside p {
+.info-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.info-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
   font-size: 0.95rem;
-  margin-bottom: 20px;
+  color: var(--color-text);
+}
+
+.info-steps__num {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: var(--color-blue);
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
 .info-section__actions {
@@ -809,7 +889,7 @@ main button {
 }
 
 /* ==========================================================
-   6. ACCESSIBILITY
+   6. FOR AIRLINES
 ========================================================== */
 .accessibility {
   background: var(--color-access-bg);
@@ -849,15 +929,34 @@ main button {
   gap: 12px;
 }
 
-.accessibility__image img {
-  width: 100%;
-  height: 100%;
+/* Stat callout instead of a photo — no dependency on a WP media file. */
+.accessibility__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   min-height: 340px;
-  object-fit: cover;
+  height: 100%;
+  background: linear-gradient(135deg, var(--brand), var(--teal));
+  color: var(--color-white);
+  text-align: center;
+  padding: 24px;
+}
+
+.accessibility__panel-value {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.accessibility__panel-label {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ==========================================================
-   7. NEWS AND PROMOTIONS
+   7. FROM THE BLOG
 ========================================================== */
 .news-section {
   max-width: var(--container-width);
@@ -954,8 +1053,8 @@ main button {
     max-width: none;
   }
 
-  .accessibility__image img {
-    min-height: 260px;
+  .accessibility__panel {
+    min-height: 220px;
   }
 
   .news-grid {
@@ -970,6 +1069,7 @@ main button {
   }
 
   .hero__content {
+    padding-top: 40px;
     margin-top: -70px;
   }
 
@@ -979,14 +1079,21 @@ main button {
     border-radius: 8px;
   }
 
-  .hero-tabs {
-    gap: 16px;
-    overflow-x: auto;
+  .hero__search {
+    flex-wrap: wrap;
+    border-radius: 16px;
+    padding: 10px;
   }
 
-  .hero-tabs__item {
-    font-size: 0.9rem;
-    white-space: nowrap;
+  .hero__search input {
+    flex-basis: 100%;
+    padding: 6px 4px;
+  }
+
+  .hero__search button {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 20px;
   }
 
   .welcome-section {
@@ -995,12 +1102,6 @@ main button {
 
   .welcome-panel {
     padding: 20px 16px 18px;
-  }
-
-  .welcome-panel .flight-board thead th,
-  .welcome-panel .flight-board tbody td {
-    padding: 9px 8px;
-    font-size: 0.78rem;
   }
 
   .guide-section {
