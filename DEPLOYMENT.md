@@ -1,11 +1,11 @@
 # Deploying to Hostinger
 
-Concrete steps for this project's specific setup: WordPress on its own subdomain (`cms.airlineslocations.com`), the Astro app running as a Node app on the root domain (`lagos-losairport.com`), both on the same Hostinger account. See `IMPLEMENTATION.md` §11 for the reasoning behind these choices.
+Concrete steps for this project's specific setup: WordPress on its own subdomain (`cms.airlineslocations.com`), the Astro app running as a Node app on the root domain (`airlineslocations.com`), both on the same Hostinger account. See `IMPLEMENTATION.md` §11 for the reasoning behind these choices.
 
 ## 0. Prerequisites
 
 - A Hostinger **Business** or **Cloud** plan (required — the "Setup Node.js App" feature in hPanel isn't on plain shared hosting).
-- The domain `lagos-losairport.com` added to that hosting account.
+- The domain `airlineslocations.com` added to that hosting account.
 
 ## 1. Create the `cms` subdomain and install WordPress there
 
@@ -48,20 +48,20 @@ Leave out: `node_modules/`, `dist/`, `.astro/` (Astro's local build cache), `.en
 
 ## 4. Upload and set up the Node.js App in hPanel
 
-1. Upload that zip to a folder outside `public_html` that hPanel's Node.js App tool can point at (a common layout is `~/los-airport-app/`), then extract it there.
+1. Upload that zip to a folder outside `public_html` that hPanel's Node.js App tool can point at (a common layout is `~/airlines-locations-app/`), then extract it there.
 2. In hPanel → **Advanced → Node.js**, create a new application:
    - **Node version**: match what you built/tested locally (18+).
-   - **Application root**: the folder from step 1 (e.g. `los-airport-app`).
+   - **Application root**: the folder from step 1 (e.g. `airlines-locations-app`).
    - **Application startup file**: `dist/server/entry.mjs`.
-   - **Application URL**: `lagos-losairport.com` (the root domain — separate from the `cms.` subdomain WordPress uses).
+   - **Application URL**: `airlineslocations.com` (the root domain — separate from the `cms.` subdomain WordPress uses).
 3. In the same panel, add **environment variables**: `STAGING`, `SITE_URL`, `WP_API_URL`, `AVIATIONSTACK_API_KEY`, `AVIATIONSTACK_CACHE_TTL`, `AVIATIONSTACK_BOARD_CACHE_TTL`, `PAGE_TREE_CACHE_TTL`, `SITE_TITLE`. Leave `STAGING=true` (or unset) while this is being built out — it blocks search engines (see §6). Passenger (Hostinger's process manager) injects `PORT`/`HOST` itself — don't set those. `AVIATIONSTACK_BOARD_CACHE_TTL` (seconds, default 21600 = 6h) controls the homepage welcome-section board specifically — it fetches automatically on every cold page load regardless of visitor searches, so on a capped AviationStack plan (the free tier is 100 calls/*month*) this needs to stay long or passive homepage traffic alone exhausts the quota. `AVIATIONSTACK_CACHE_TTL` covers the user-initiated search boxes instead and can stay shorter.
 4. Run the panel's "npm install" action (or it may run automatically on save), then start/restart the app.
 
 ## 5. Verify
 
-- `lagos-losairport.com/` — homepage loads.
-- `lagos-losairport.com/flights/departures` (or whatever nested page exists in WP) — resolves through the live WP fetch.
-- `lagos-losairport.com/robots.txt` — should read `Disallow: /` for now (see §6 — this is expected while `STAGING=true`).
+- `airlineslocations.com/` — homepage loads.
+- `airlineslocations.com/flights/departures` (or whatever nested page exists in WP) — resolves through the live WP fetch.
+- `airlineslocations.com/robots.txt` — should read `Disallow: /` for now (see §6 — this is expected while `STAGING=true`).
 - `cms.airlineslocations.com/wp-admin` — WordPress admin loads independently of the Node app.
 - Edit a WP page's title, wait `PAGE_TREE_CACHE_TTL` seconds (default 300), refresh the frontend page — confirm it updates with no redeploy.
 
@@ -72,7 +72,7 @@ While `STAGING` is `true`/unset, `robots.txt` disallows everything and every pag
 1. Set `STAGING=false` in the Node.js App environment-variables panel.
 2. Re-run hPanel's "npm install" action — no file changed, but this re-triggers the `postinstall` build (`astro build`), which is what actually bakes the new `STAGING` value into the prerendered homepage/404 pages. A plain restart alone won't do this since it doesn't re-run `npm install`.
 3. Restart the app.
-4. Confirm `lagos-losairport.com/robots.txt` now shows `Allow: /` and a `Sitemap:` line, and that a page's `<head>` no longer has the `noindex` meta tag.
+4. Confirm `airlineslocations.com/robots.txt` now shows `Allow: /` and a `Sitemap:` line, and that a page's `<head>` no longer has the `noindex` meta tag.
 
 ## Future changes
 

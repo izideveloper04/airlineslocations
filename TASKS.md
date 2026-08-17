@@ -1,4 +1,4 @@
-# TASKS — LOS Airport (Astro + Headless WordPress)
+# TASKS — Airlines Locations (Astro + Headless WordPress)
 
 Work through phases in order. Check off items as completed. Do not begin a phase before the prior phase's items are checked.
 
@@ -82,7 +82,7 @@ Requires access to the real WP instance to verify/apply — the Astro-side depen
 ## Phase 11 — Deployment
 - [x] Choose hosting/adapter target (document choice and why) — Hostinger only (Business/Cloud plan, Node.js App feature), `@astrojs/node` standalone adapter, see `IMPLEMENTATION.md` §11
 - [x] Set up a rebuild/revalidation trigger for statically-prerendered content — not applicable: no content pages are statically prerendered (see `IMPLEMENTATION.md` §1), WP edits show up live within `PAGE_TREE_CACHE_TTL`
-- [ ] Set production environment variables — `SITE_URL` (`lagos-losairport.com`), `WP_API_URL` (`cms.airlineslocations.com`), `AVIATIONSTACK_API_KEY`, etc. directly in the Node.js App environment-variables panel in hPanel; needs the real AviationStack key, can't be filled in from here
+- [ ] Set production environment variables — `SITE_URL` (`airlineslocations.com`), `WP_API_URL` (`cms.airlineslocations.com`), `AVIATIONSTACK_API_KEY`, etc. directly in the Node.js App environment-variables panel in hPanel; needs the real AviationStack key, can't be filled in from here
 
 ## Phase 12 — QA
 
@@ -93,4 +93,4 @@ Needs a real WP instance + deployed build to execute — not yet run.
 - [x] Test a page whose template isn't in the mapping table falls back gracefully — confirmed live: `/blog` has an empty `wp_template` (not in `TEMPLATE_LAYOUT_MAP`) and correctly falls back to `DefaultPageLayout`
 - [ ] Test AviationStack search bar failure states — partially confirmed: `/api/flight-search` with no params correctly returns `400`; UI-level states (no results, network failure) still need a manual browser check since they're client-side rendered
 - [x] Test WP content edits appear on the frontend within `PAGE_TREE_CACHE_TTL` seconds, no rebuild needed — superseded by push-based invalidation: publish/update/trash now purges the in-memory cache via a webhook (`wordpress/rest-api-additions.php` → `src/pages/api/revalidate.ts` → `purgeCache()` in `src/lib/wp.ts`), confirmed showing up within seconds; the TTL remains as a fallback only
-- [x] Confirm `cms.airlineslocations.com` serves WordPress independently of the `lagos-losairport.com` Node app (separate subdomains — see `IMPLEMENTATION.md` §11) — confirmed, both domains verified live and independently reachable
+- [x] Confirm `cms.airlineslocations.com` serves WordPress independently of the `airlineslocations.com` Node app (separate subdomains — see `IMPLEMENTATION.md` §11) — confirmed, both domains verified live and independently reachable
