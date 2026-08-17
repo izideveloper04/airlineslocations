@@ -23,7 +23,7 @@ const results = query ? airlines.filter((page) => page.title.toLowerCase().inclu
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<BaseLayout title="Airlines — Airlines Locations" description="Airlines operating at Airlines Locations.">
+<BaseLayout title="Airlines | Airlines Locations" description="Airlines operating at Airlines Locations.">
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Airlines" }]} />
   <h1 class="text-3xl font-bold mb-6">Airlines</h1>
 
