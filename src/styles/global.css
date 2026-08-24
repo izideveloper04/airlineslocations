@@ -2,17 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Self-hosted, not the Google Fonts CDN — README.md's own Non-goals section
-   rules out CDN-hosted fonts. Single variable-font file covers the whole
-   400–700 weight range used across the site, so one @font-face with a
-   weight range is enough — no need for separate static-weight files. Drop
-   the actual woff2 file into src/assets/fonts/ — referenced here by
-   relative path so Vite fingerprints/copies it at build time.
-   One typeface sitewide (Inter) rather than a body/display serif pairing —
-   hierarchy comes from weight, size and tracking, not a second family. Adding
-   a display serif with no brand rationale behind it is a well-documented
-   default LLM/AI-generated sites reach for; a directory/lookup tool for
-   travelers reads clearer with one consistent voice throughout. */
+/* Self-hosted, not the Google Fonts CDN. One weight-range variable font
+   covers the whole site — no separate static-weight files needed. */
 @font-face {
   font-family: "Inter";
   src: url("../assets/fonts/inter-variable.woff2") format("woff2-variations");
@@ -23,1081 +14,435 @@
 
 @layer base {
   :root {
-    /* Airlines Locations brand — one blue accent throughout, with a warm
-       orange reserved for focus rings and a single restrained background
-       tint (the "For airlines" section). Change these to re-theme the whole
-       site; no tailwind.config edits required. */
     --brand: #1d4ed8;
     --brand-dark: #1e3a8a;
-    --brand-light: #60a5fa;
-    --accent: #f97316;
-    --accent-dark: #c2410c;
-    --ink: #0f172a;
-    --surface: #f4f7fb;
-    --line: rgba(15, 23, 42, 0.1);
+    --brand-tint: #eef2ff;
+    --ink: #171717;
+    --line: #e2e2e2;
+    --surface: #f7f7f7;
 
-    /* Same family as body, used at heavier weight + tighter tracking for
-       headings — see the @font-face comment above for why there's no
-       separate display face. */
-    --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
-    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    /* One radius scale for the whole site: listing cards/panels at
+       --radius-card, interactive controls (buttons/inputs) at
+       --radius-control. Nothing outside these two values. */
+    --radius-card: 12px;
+    --radius-control: 8px;
 
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
-    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.06);
-
-    /* Homepage section tokens (src/pages/index.astro) — aliased onto the
-       brand palette above so the hero/section styles theme with the rest
-       of the site instead of carrying their own palette. */
-    --color-navy: var(--ink);
-    --color-blue: var(--brand);
-    --color-blue-dark: var(--brand-dark);
-    --color-yellow: var(--accent);
-    --color-panel-bg: color-mix(in srgb, var(--brand-light) 14%, white);
-    --color-access-bg: color-mix(in srgb, var(--accent) 12%, var(--surface));
-    --color-border: var(--line);
-    --color-text: var(--ink);
-    --color-text-muted: rgba(15, 23, 42, 0.65);
-    --color-white: #ffffff;
-
-    --container-width: 1180px;
-    /* One corner-radius scale for the whole homepage: cards/photos/panels
-       at --radius, pill shapes (buttons, icon badges) at full radius. */
-    --radius: 12px;
-
-    /* Shared size for every homepage section heading (Value, Featured
-       Airlines, How It Works, For Airlines, Blog) — they're peers in the
-       same visual hierarchy and should read as one consistent scale. */
-    --h2-size: clamp(1.75rem, 1.35rem + 1.8vw, 2.25rem);
-  }
-
-  html {
-    /* Safety net, not a workaround for content that's supposed to overflow:
-       nothing on this site is ever meant to scroll horizontally. The
-       homepage (src/pages/index.astro) opts into BaseLayout's `fullBleed`
-       prop to get an edge-to-edge <main> for its hero/section backgrounds
-       instead of the default max-w-5xl container.
-       `clip`, not `hidden`: setting overflow-x to anything but `visible`
-       forces overflow-y to compute to `auto` too (per the CSS overflow
-       spec's axis-pairing rule) — which turns this element into a scroll
-       container and breaks `position: sticky` for every descendant on the
-       page, since sticky elements stick relative to the nearest such
-       container instead of the real viewport. `clip` was added to CSS
-       specifically to allow one-axis clipping without that side effect. */
-    overflow-x: clip;
+    /* Shadows tinted toward ink instead of pure black, resting vs. hover. */
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-card-hover: 0 16px 28px -12px rgba(15, 23, 42, 0.22);
+    --shadow-float: 0 20px 40px -16px rgba(15, 23, 42, 0.28);
   }
 
   body {
-    background: var(--surface);
+    background: #fff;
     color: var(--ink);
-    font-family: var(--font-body);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   }
 
-  /* Weight + tracking carry the "display" distinction now that headings
-     share Inter with body text instead of pairing with a separate face. */
-  .font-display {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-
-  /* Visible keyboard focus everywhere — quality floor, not optional. */
   a:focus-visible,
   button:focus-visible,
   input:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--brand);
     outline-offset: 2px;
-    border-radius: 4px;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
 
 @layer components {
-  /* ---- Signature element: ticket-stub row, used for the Airlines list ----
-     Two circular "punches" cut to the page background color plus a dashed
-     tear line — reads like an actual boarding-pass row rather than a
-     generic card. */
-  .ticket-stub {
-    position: relative;
+  /* Search box — used on the homepage and /airlines. Icon is decorative;
+     the label element still carries the accessible name. */
+  .search-form {
     display: flex;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 1rem;
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    gap: 0.6rem;
+    max-width: 34rem;
   }
-
-  .ticket-stub:hover {
-    border-color: var(--brand-light);
-    box-shadow: var(--shadow-md);
-  }
-
-  .ticket-stub::before,
-  .ticket-stub::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1.1rem;
-    height: 1.1rem;
-    background: var(--surface);
-    border-radius: 9999px;
-    z-index: 1;
-  }
-
-  .ticket-stub::before {
-    right: calc(3.5rem - 0.55rem);
-  }
-
-  .ticket-stub::after {
-    left: -0.55rem;
-    display: none;
-  }
-
-  .ticket-stub__tear {
-    width: 0;
-    border-left: 1.5px dashed var(--line);
-    margin: 0.75rem 0;
-  }
-
-  .ticket-stub__main {
+  .search-form__field {
+    position: relative;
     flex: 1;
     min-width: 0;
-    display: flex;
-    align-items: center;
-    padding: 1rem 1.25rem;
+  }
+  .search-form__field svg {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: #9ca3af;
+    pointer-events: none;
+  }
+  .search-form input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.6rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    font-size: 0.95rem;
+  }
+  .search-form button {
+    padding: 0.75rem 1.4rem;
+    background: var(--brand);
+    color: #fff;
+    border-radius: var(--radius-control);
     font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+  }
+  .search-form button:hover {
+    background: var(--brand-dark);
+  }
+  .search-form button:active {
+    transform: scale(0.98);
   }
 
-  .ticket-stub__end {
+  /* Generic listing card + grid, reused for directory listings and blog
+     posts across the homepage, /airlines, and section directory pages. */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.25rem;
+  }
+  .card {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: #fff;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+  a.card:hover,
+  article.card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--line);
+  }
+  .card__media {
+    display: block;
+    aspect-ratio: 4 / 3;
     background: var(--surface);
-    width: 3.5rem;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  }
+  .card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .card__body {
+    padding: 1rem 1.1rem 1.15rem;
+  }
+  .card__kicker {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--brand);
+    margin: 0 0 0.2rem;
+  }
+  .card__title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.35;
+  }
+  .card__title a:hover {
+    color: var(--brand);
+  }
+  .card__meta {
+    font-size: 0.8rem;
+    color: #666;
+  }
+  .card__excerpt {
+    font-size: 0.875rem;
+    color: #444;
+    margin-top: 0.4rem;
+  }
+  .card__excerpt p {
+    margin: 0;
+  }
+  .card__cta {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--brand);
+    margin-top: 0.5rem;
+  }
+  .card__cta:hover {
+    text-decoration: underline;
   }
 
-  .ticket-stub__icon {
-    width: 20px;
-    height: 20px;
+  @media (prefers-reduced-motion: reduce) {
+    .card {
+      transition: none;
+    }
+    a.card:hover,
+    article.card:hover {
+      transform: none;
+    }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-control);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn--primary {
+    background: var(--brand);
+    color: #fff;
+  }
+  .btn--primary:hover {
+    background: var(--brand-dark);
+  }
+  .btn--outline {
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .btn--outline:hover {
+    border-color: var(--brand);
     color: var(--brand);
   }
 
-  /* Hero flight-route art (src/pages/index.astro) — two pulsing location
-     dots connected by a dashed path, with a small plane icon traveling
-     between them. Driven entirely by CSS (offset-path), not SMIL, so the
-     prefers-reduced-motion override below actually applies to it. Path
-     coordinates here must match the visible <path> in the hero SVG
-     (viewBox 0 0 400 480). */
-  .route-art {
-    position: relative;
-    width: 100%;
-    height: 100%;
+  /* Small pill link used for "View all" style section actions. */
+  .view-all {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--brand);
+    white-space: nowrap;
+  }
+  .view-all:hover {
+    text-decoration: underline;
   }
 
-  .route-pulse {
-    animation: route-pulse 2.4s ease-out infinite;
-    transform-origin: center;
+  /* Sidebar "In this section" nav — driven by ChildPageLayout's sibling
+     query (see src/lib/wp.ts), this is presentation only. */
+  .side-nav {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 1rem;
   }
-
-  .route-plane {
-    offset-path: path("M 290 90 Q 130 250 110 410");
-    offset-rotate: auto;
-    animation: route-travel 6s linear infinite;
+  .side-nav__title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #666;
+    margin-bottom: 0.6rem;
   }
-}
-
-@keyframes route-pulse {
-  0% {
-    r: 7;
+  .side-nav__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .side-nav__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .side-nav__link:hover {
+    background: var(--surface);
+    color: var(--brand);
+  }
+  .side-nav__link svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
     opacity: 0.5;
   }
-  100% {
-    r: 24;
-    opacity: 0;
-  }
-}
 
-@keyframes route-travel {
-  0% {
-    offset-distance: 0%;
-    opacity: 0;
+  /* Homepage hero — full-width background photo with a dark scrim so the
+     heading stays readable regardless of the photo underneath. The search
+     box lives in .search-card just below, overlapping the hero's bottom
+     edge (the familiar "search over photo" listings-site pattern) rather
+     than sitting inside the photo itself. */
+  .hero-photo {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    padding: 4rem 1.5rem 5.5rem;
   }
-  8%,
-  92% {
-    opacity: 1;
+  .hero-photo__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
   }
-  100% {
-    offset-distance: 100%;
-    opacity: 0;
+  .hero-photo__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
-}
-
-/* Hero entrance — plain CSS `animation` on page load, deliberately not a
-   scroll-triggered IntersectionObserver reveal. A JS-gated "hidden until
-   scrolled into view" pattern was tried here first and cut: any render
-   path that doesn't simulate a real incremental scroll (print view,
-   share-link screenshot services, some accessibility tooling, a headless
-   screenshot) left the observer never firing and whole sections stuck at
-   opacity 0 — confirmed while testing this page. A load-triggered
-   animation always completes on its own; nothing can end up permanently
-   invisible. `animation-fill-mode: both` holds the pre-animation state
-   only until the animation starts (not indefinitely), and always ends at
-   the CSS-authored resting state (opacity 1) regardless of JS/timing. */
-@keyframes hero-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
+  .hero-photo__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, rgba(10, 12, 20, 0.5) 0%, rgba(10, 12, 20, 0.65) 100%);
   }
-  to {
-    opacity: 1;
-    transform: none;
+  .hero-photo__inner {
+    max-width: 38rem;
+    margin: 0 auto;
   }
-}
-
-.hero-split__text > * {
-  animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.hero-split__text > *:nth-child(2) {
-  animation-delay: 0.08s;
-}
-.hero-split__text > *:nth-child(3) {
-  animation-delay: 0.16s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .route-pulse,
-  .route-plane {
-    animation: none !important;
+  .hero-photo h1 {
+    font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
+  }
+  .hero-photo p {
+    color: rgba(255, 255, 255, 0.88);
+    margin: 0;
   }
 
-  .hero-split__text > * {
-    animation: none;
+  /* Search card — pulled up over the hero photo's bottom edge. */
+  .search-card {
+    position: relative;
+    z-index: 2;
+    max-width: 36rem;
+    margin: -3rem auto 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-float);
+    padding: 1.1rem;
   }
-}
-
-/* Typography defaults for WP block-editor HTML rendered via set:html.
-   WP core CSS isn't present here, so this scoped layer replaces it. */
-.prose {
-  @apply max-w-3xl;
-  color: var(--ink);
-}
-
-.prose :where(h1, h2, h3, h4) {
-  font-family: var(--font-display);
-  @apply font-bold mt-8 mb-4 leading-tight tracking-tight;
-  color: var(--ink);
-}
-
-.prose h1 {
-  @apply text-3xl;
-}
-.prose h2 {
-  @apply text-2xl;
-}
-.prose h3 {
-  @apply text-xl;
-}
-
-.prose p {
-  @apply my-4 leading-relaxed;
-}
-
-.prose a {
-  color: var(--brand);
-  @apply underline underline-offset-2;
-}
-.prose a:hover {
-  color: var(--brand-dark);
-}
-
-.prose ul {
-  @apply list-disc pl-6 my-4;
-}
-.prose ol {
-  @apply list-decimal pl-6 my-4;
-}
-
-.prose img {
-  @apply my-6 rounded-xl max-w-full h-auto;
-}
-
-.prose figure {
-  @apply my-6;
-}
-.prose figcaption {
-  @apply text-sm mt-2;
-  color: rgba(15, 23, 42, 0.7);
-}
-
-.prose blockquote {
-  border-left: 4px solid var(--brand-light);
-  @apply pl-4 italic my-6;
-  color: rgba(15, 23, 42, 0.8);
-}
-
-.prose table {
-  @apply w-full border-collapse my-6;
-}
-.prose th,
-.prose td {
-  border: 1px solid var(--line);
-  @apply px-3 py-2 text-left;
-}
-
-
-
-/*Homepage CSS start here*/
-/* ==========================================================
-   Airlines Locations — Homepage Content Styles
-   Scope: everything below lives inside <main> (src/pages/index.astro).
-   Selectors are class-based only (no bare `div`, `section`, `button`,
-   etc.) so nothing here can leak into an existing header/footer.
-   Colors resolve through the --color-* aliases defined in the :root
-   block above, which point at the shared brand tokens.
-========================================================== */
-
-/* ---------- reset-ish base (scoped to main) ---------- */
-main {
-  font-family: var(--font-body);
-  color: var(--color-text);
-  -webkit-font-smoothing: antialiased;
-  /* clip, not hidden — see the html rule's comment above for why. */
-  overflow-x: clip;
-}
-
-main * {
-  box-sizing: border-box;
-}
-
-main img {
-  max-width: 100%;
-  display: block;
-}
-
-main h1,
-main h2,
-main h3 {
-  color: var(--color-navy);
-  margin: 0;
-  line-height: 1.15;
-}
-
-main p {
-  margin: 0;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-}
-
-main a {
-  color: var(--color-blue);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-main a:hover {
-  text-decoration: underline;
-}
-
-main button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-/* generic button used across sections */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 13px 22px;
-  border-radius: 9999px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn--primary {
-  background: var(--color-blue);
-  color: var(--color-white);
-}
-.btn--primary:hover {
-  background: var(--color-blue-dark);
-  text-decoration: none;
-}
-
-.btn--outline {
-  background: var(--color-white);
-  color: var(--color-blue);
-  border: 1.5px solid var(--color-blue);
-}
-.btn--outline:hover {
-  background: #f2f6ff;
-  text-decoration: none;
-}
-
-/* .ticket-stub (Airlines grid, @layer components above) is styled to look
-   like a physical boarding-pass stub, not an inline text link — this has
-   to sit outside any @layer block to win, since unlayered rules always
-   beat layered ones regardless of specificity, and `main a` below is
-   unlayered too. */
-.ticket-stub {
-  color: var(--ink);
-}
-
-.ticket-stub:hover {
-  color: var(--brand);
-  text-decoration: none;
-}
-
-/* ==========================================================
-   1. HERO — asymmetric split: copy + search left, route-art right.
-   Text sits on a plain surface background (not on the gradient), so
-   contrast is never a concern; the gradient lives only in the art panel.
-========================================================== */
-.hero-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 60vh;
-}
-
-.hero-split__text {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 24px 48px;
-  max-width: 560px;
-}
-
-.hero-split__text h1 {
-  font-size: clamp(2.25rem, 1.7rem + 2.4vw, 3.5rem);
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: 18px;
-}
-
-.hero-split__text p {
-  font-size: 1.05rem;
-  margin-bottom: 28px;
-  max-width: 46ch;
-}
-
-.hero-split__art {
-  position: relative;
-  min-height: 320px;
-  background: linear-gradient(150deg, var(--brand-dark) 0%, var(--brand) 100%);
-}
-
-.hero-search {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 9999px;
-  padding: 6px 6px 6px 20px;
-  box-shadow: var(--shadow-sm);
-  max-width: 440px;
-  transition: box-shadow 0.15s ease;
-}
-
-/* The input's own :focus outline is suppressed below (it doesn't fit the
-   pill shape) — this keeps keyboard focus visible on the container instead,
-   per the sitewide "visible keyboard focus everywhere" rule above. */
-.hero-search:focus-within {
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.hero-search input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  font-size: 0.95rem;
-  color: var(--ink);
-}
-
-.hero-search input:focus {
-  outline: none;
-}
-
-.hero-search button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--brand);
-  color: var(--color-white);
-  border: none;
-  border-radius: 9999px;
-  padding: 0 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: background-color 0.15s ease, transform 0.1s ease;
-}
-
-.hero-search button:hover {
-  background: var(--brand-dark);
-}
-
-.hero-search button:active {
-  transform: scale(0.98);
-}
-
-.hero-search button svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* ==========================================================
-   2. STAT STRIP — plain numbers with dividers, no cards.
-========================================================== */
-.stat-strip {
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.stat-strip__inner {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  display: flex;
-  padding: 28px 24px;
-}
-
-.stat-strip__item {
-  flex: 1;
-  text-align: center;
-  padding: 0 16px;
-  border-left: 1px solid var(--color-border);
-}
-
-.stat-strip__item:first-child {
-  border-left: none;
-}
-
-.stat-strip__value {
-  display: block;
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--color-navy);
-  line-height: 1.1;
-}
-
-.stat-strip__label {
-  display: block;
-  font-size: 0.82rem;
-  color: var(--color-text-muted);
-  margin-top: 4px;
-}
-
-/* ==========================================================
-   3. VALUE — short intro, then a divided list (not equal cards).
-========================================================== */
-.value-section {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  padding: 80px 24px 40px;
-}
-
-.value-section__intro {
-  max-width: 640px;
-  margin-bottom: 40px;
-}
-
-.value-section__intro h2 {
-  font-size: var(--h2-size);
-  margin-bottom: 14px;
-}
-
-.value-section__intro p {
-  font-size: 1.05rem;
-  margin-bottom: 22px;
-}
-
-.value-list {
-  border-top: 1px solid var(--color-border);
-}
-
-.value-list__item {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 24px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.value-list__icon {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-  color: var(--color-white);
-}
-
-.value-list__icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-.value-list__title {
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: var(--color-navy);
-  margin-bottom: 4px;
-}
-
-.value-list__desc {
-  font-size: 0.92rem;
-  max-width: 60ch;
-}
-
-/* ==========================================================
-   4. FEATURED AIRLINES — horizontal scroll-snap carousel.
-========================================================== */
-.guide-section {
-  padding: 40px 24px 60px;
-  max-width: var(--container-width);
-  margin: 0 auto;
-}
-
-.guide-section__header h2 {
-  font-size: var(--h2-size);
-  max-width: 320px;
-  margin-bottom: 26px;
-}
-
-/* Horizontal scroll-snap slider — no carousel library. Card width is fixed
-   via flex-basis so the JS nav buttons can scroll by exactly one card. */
-.guide-track {
-  display: flex;
-  gap: 18px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-}
-
-.guide-track::-webkit-scrollbar {
-  display: none;
-}
-
-.guide-card {
-  position: relative;
-  display: block;
-  flex: 0 0 clamp(200px, 24vw, 280px);
-  scroll-snap-align: start;
-  border-radius: var(--radius);
-  overflow: hidden;
-  aspect-ratio: 5 / 5.6;
-}
-
-/* Image-free card — featured-airline cards have no photo. A tinted panel
-   with the airline name instead. */
-.guide-card--plain {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 22px;
-  background: linear-gradient(135deg, var(--color-panel-bg), #fff);
-  border: 1px solid var(--color-border);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.guide-card--plain:hover {
-  border-color: var(--brand-light);
-  box-shadow: var(--shadow-md);
-}
-
-.guide-card__title {
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: var(--color-navy);
-}
-
-.guide-card__arrow {
-  color: var(--color-blue);
-  font-size: 1.2rem;
-}
-
-.guide-nav {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.guide-nav__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  border: 1.5px solid var(--color-border);
-  background: var(--color-white);
-  color: var(--color-blue);
-}
-
-.guide-nav__btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.guide-nav__btn:not(:disabled):hover {
-  border-color: var(--color-blue);
-  background: #eef4ff;
-}
-
-.guide-nav__btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-/* ==========================================================
-   5. HOW IT WORKS — horizontal process row, not a card grid.
-========================================================== */
-.process-section {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  padding: 20px 24px 70px;
-  text-align: center;
-}
-
-.process-section h2 {
-  font-size: var(--h2-size);
-  max-width: 520px;
-  margin: 0 auto 40px;
-}
-
-.process-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 8px;
-}
-
-.process-step {
-  flex: 1;
-  max-width: 260px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.process-step__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 9999px;
-  background: var(--color-blue);
-  color: var(--color-white);
-  font-weight: 700;
-  margin-bottom: 14px;
-}
-
-.process-step p {
-  font-size: 0.92rem;
-}
-
-.process-step__connector {
-  flex: 0 0 auto;
-  width: clamp(24px, 6vw, 64px);
-  height: 1.5px;
-  background: var(--color-border);
-  margin-top: 20px;
-}
-
-/* ==========================================================
-   6. FOR AIRLINES — split with photo.
-========================================================== */
-.partner-section {
-  background: var(--color-access-bg);
-}
-
-.partner-section__inner {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 56px;
-  padding: 70px 24px;
-}
-
-.partner-section__content h2 {
-  font-size: var(--h2-size);
-  margin-bottom: 16px;
-}
-
-.partner-section__content p {
-  font-size: 0.95rem;
-  margin-bottom: 22px;
-  max-width: 46ch;
-}
-
-.partner-section__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.partner-section__media {
-  position: relative;
-}
-
-.partner-section__art {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 320px;
-  border-radius: var(--radius);
-  background: linear-gradient(150deg, var(--brand-dark) 0%, var(--brand) 100%);
-}
-
-.partner-section__art svg {
-  width: 72px;
-  height: 72px;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.partner-section__stat {
-  position: absolute;
-  right: 20px;
-  bottom: -20px;
-  background: var(--color-white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  padding: 14px 20px;
-  text-align: center;
-}
-
-.partner-section__stat-value {
-  display: block;
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--color-navy);
-  line-height: 1.1;
-}
-
-.partner-section__stat-label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  max-width: 110px;
-}
-
-/* ==========================================================
-   7. FROM THE BLOG
-========================================================== */
-.news-section {
-  max-width: var(--container-width);
-  margin: 0 auto;
-  padding: 90px 24px 90px;
-}
-
-.news-section > h2 {
-  font-size: var(--h2-size);
-  margin-bottom: 26px;
-}
-
-.news-section__empty {
-  font-size: 0.95rem;
-}
-
-.news-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-
-.news-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 18px;
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.news-card:hover {
-  border-color: var(--brand-light);
-  box-shadow: var(--shadow-md);
-}
-
-.news-card__media {
-  display: block;
-}
-
-.news-card__media img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-}
-
-.news-card h3 {
-  font-size: 1rem;
-  padding: 16px 16px 0;
-}
-
-.news-card__date {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  padding: 4px 16px 0;
-}
-
-.news-card__excerpt {
-  font-size: 0.82rem;
-  padding: 8px 16px 12px;
-  flex: 1;
-}
-
-/* Dedicated class instead of a bare `.news-card a` — that matched every
-   anchor in the card, including the thumbnail/title links added later,
-   and leaked this padding onto them too. */
-.news-card__cta {
-  padding: 0 16px;
-  font-size: 0.85rem;
-}
-
-/* ==========================================================
-   RESPONSIVE
-========================================================== */
-
-/* Tablet */
-@media (max-width: 1024px) {
-  .hero-split {
-    grid-template-columns: 1fr;
-    min-height: 0;
-  }
-
-  .hero-split__art {
-    order: -1;
-    min-height: 220px;
-  }
-
-  .hero-split__text {
-    max-width: none;
-    padding: 40px 24px;
-  }
-
-  .stat-strip__inner {
-    flex-wrap: wrap;
-    gap: 20px 0;
-  }
-
-  .stat-strip__item {
-    flex: 1 1 50%;
-    border-left: none;
-    border-top: 1px solid var(--color-border);
-    padding-top: 16px;
-  }
-
-  .process-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .process-step {
+  .search-card .search-form {
     max-width: none;
   }
 
-  .process-step__connector {
-    width: 1.5px;
-    height: 24px;
-    margin: 4px auto;
+  .hero-stat {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 1.1rem;
   }
 
-  .partner-section__inner {
-    grid-template-columns: 1fr;
+  /* Icon + heading + subheading cards (homepage "why us" row). */
+  .icon-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
   }
-
-  .news-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .icon-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 1.5rem;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
-}
-
-/* Mobile */
-@media (max-width: 640px) {
-  .hero-split__text {
-    padding: 32px 18px;
+  .icon-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-hover);
   }
-
-  .hero-search {
-    flex-wrap: wrap;
-    border-radius: 16px;
-    padding: 10px;
-    max-width: none;
-  }
-
-  .hero-search input {
-    flex-basis: 100%;
-    padding: 6px 4px;
-  }
-
-  .hero-search button {
-    flex: 1;
+  .icon-card__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 10px 20px;
+    border-radius: 999px;
+    background: var(--brand-tint);
+    color: var(--brand);
+    margin-bottom: 1rem;
+  }
+  .icon-card__icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .icon-card__title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 0.4rem;
+  }
+  .icon-card__desc {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.5;
   }
 
-  .value-section {
-    padding: 50px 18px 30px;
+  @media (prefers-reduced-motion: reduce) {
+    .icon-card {
+      transition: none;
+    }
+    .icon-card:hover {
+      transform: none;
+    }
   }
 
-  .guide-section {
-    padding: 30px 18px 40px;
+  /* Typography for WordPress block-editor HTML rendered via set:html. */
+  .prose {
+    max-width: 65ch;
   }
-
-  .guide-track {
-    gap: 12px;
+  .prose :is(h1, h2, h3, h4) {
+    font-weight: 700;
+    margin-top: 1.6em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
   }
-
-  .process-section {
-    padding: 10px 18px 50px;
+  .prose h2 {
+    font-size: 1.4rem;
   }
-
-  .partner-section__inner {
-    padding: 50px 18px;
-    gap: 40px;
+  .prose h3 {
+    font-size: 1.15rem;
   }
-
-  .partner-section__stat {
-    position: static;
-    margin-top: -40px;
-    margin-left: 16px;
-    width: fit-content;
+  .prose p {
+    margin: 1em 0;
+    line-height: 1.7;
   }
-
-  .news-section {
-    padding: 50px 18px 60px;
+  .prose ul,
+  .prose ol {
+    margin: 1em 0;
+    padding-left: 1.4em;
   }
-
-  .news-grid {
-    grid-template-columns: 1fr;
+  .prose li {
+    margin: 0.35em 0;
+  }
+  .prose a {
+    color: var(--brand);
+    text-decoration: underline;
+  }
+  .prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.2em 0;
+  }
+  .prose blockquote {
+    border-left: 3px solid var(--line);
+    padding-left: 1em;
+    color: #555;
+    font-style: italic;
+    margin: 1.2em 0;
+  }
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.2em 0;
+  }
+  .prose th,
+  .prose td {
+    border: 1px solid var(--line);
+    padding: 0.5em 0.75em;
+    text-align: left;
   }
 }
-
-/*Homepage CSS end here*/

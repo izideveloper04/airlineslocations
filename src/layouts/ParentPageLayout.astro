@@ -2,7 +2,6 @@
 import BaseLayout from "./BaseLayout.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import RelatedPages from "../components/RelatedPages.astro";
-import FeaturedImage from "../components/FeaturedImage.astro";
 import type { WPPage, PageTree, ResolvedPageMeta } from "../lib/wp";
 import { getAncestorChain, getChildren } from "../lib/wp";
 
@@ -21,6 +20,11 @@ const breadcrumbItems = [
   ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
   { label: page.title },
 ];
+
+// A client-side text filter only earns its keep once there's enough to
+// filter - below this, "search this section" would be a redundant control
+// sitting above a handful of cards someone can already scan at a glance.
+const SHOW_FILTER_THRESHOLD = 9;
 ---
 
 <BaseLayout
@@ -31,15 +35,48 @@ const breadcrumbItems = [
   ogDescription={meta.ogDescription}
   ogImage={meta.ogImage}
 >
-  <!-- Hero: image + title + breadcrumb only — this template is a directory
-       page, not a content page, so page.content is deliberately never
-       rendered here. No sidebar either; children render as a card grid
-       below. -->
-  <FeaturedImage src={page.featuredImage} />
-  <header class="border-b border-ink/10 pb-6 mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold mb-4">{page.title}</h1>
-    <Breadcrumbs items={breadcrumbItems} />
-  </header>
+  <!-- This template is a directory page, not a content page, so
+       page.content is deliberately never rendered here. Children render as
+       a card grid below, with no sidebar. -->
+  <Breadcrumbs items={breadcrumbItems} />
+  <h1 class="text-2xl font-bold mb-1">{page.title}</h1>
+  {children.length > 0 && (
+    <p class="text-sm text-ink/60 mb-6">
+      {children.length} {children.length === 1 ? "page" : "pages"} listed under {page.title}.
+    </p>
+  )}
+
+  {children.length >= SHOW_FILTER_THRESHOLD && (
+    <div class="mb-6 max-w-sm">
+      <label for="dir-filter-input" class="visually-hidden">Filter this section</label>
+      <input
+        id="dir-filter-input"
+        type="text"
+        placeholder="Filter this section…"
+        autocomplete="off"
+        data-dir-filter
+        class="w-full px-3 py-2 border border-[var(--line)] rounded-md text-sm"
+      />
+    </div>
+  )}
 
   <RelatedPages pages={children} />
+
+  {children.length >= SHOW_FILTER_THRESHOLD && (
+    <script>
+      // Plain substring filter over the already-rendered card grid - the
+      // full child list is already on the page (no separate fetch), so
+      // hiding/showing existing .card elements is enough.
+      const input = document.querySelector<HTMLInputElement>("[data-dir-filter]");
+      const cards = document.querySelectorAll<HTMLElement>(".card[data-title]");
+
+      input?.addEventListener("input", () => {
+        const needle = input.value.trim().toLowerCase();
+        cards.forEach((card) => {
+          const title = card.dataset.title ?? "";
+          card.hidden = needle.length > 0 && !title.includes(needle);
+        });
+      });
+    </script>
+  )}
 </BaseLayout>

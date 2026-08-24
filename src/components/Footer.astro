@@ -1,15 +1,41 @@
 ---
+import { navItems } from "../lib/navigation";
+
 const year = new Date().getFullYear();
+// Top-level nav items with a real destination — same restraint the header
+// applies to placeholder/no-href items (see Header.astro), just without the
+// submenu chrome a footer link list doesn't need.
+const footerLinks = navItems.filter((item) => item.href && item.href !== "javascript:void(0)");
 ---
 
-<footer class="bg-white border-t border-ink/10 mt-auto">
-  <div class="max-w-5xl mx-auto px-4 py-8">
-    <p class="text-sm text-ink/60 leading-relaxed">
-      Disclaimer: The information provided on Airlines Locations is for general informational purposes only. We are an independent website and have no official affiliation with any airline, airport, or aviation authority. While we intend to keep our content accurate and up to date, passengers should confirm important details with the respective airline or the Federal Airports Authority of Nigeria (FAAN).
-    </p>
+<footer class="mt-auto border-t border-[var(--line)] bg-[var(--surface)]">
+  <div class="max-w-5xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
+    <div>
+      <a href="/" class="font-bold text-ink">Airlines Locations</a>
+      <p class="text-ink/60 mt-3 max-w-xs leading-relaxed">
+        A directory of airline offices, contact details, and locations worldwide.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-bold uppercase tracking-wide text-ink/50 mb-3">Explore</h2>
+      <ul class="space-y-1.5">
+        <li><a href="/" class="text-ink/70 hover:text-brand">Home</a></li>
+        {footerLinks.map((item) => (
+          <li><a href={item.href!} class="text-ink/70 hover:text-brand">{item.label}</a></li>
+        ))}
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-bold uppercase tracking-wide text-ink/50 mb-3">Disclaimer</h2>
+      <p class="text-ink/60 leading-relaxed">
+        The information provided on Airlines Locations is for general informational purposes only. We are an independent website and have no official affiliation with any airline, airport, or aviation authority. While we intend to keep our content accurate and up to date, passengers should confirm important details with the respective airline or the Federal Airports Authority of Nigeria (FAAN).
+      </p>
+    </div>
   </div>
-  <div class="border-t border-ink/10">
-    <div class="max-w-5xl mx-auto px-4 py-4 text-center text-sm text-ink/50">
+  <div class="border-t border-[var(--line)]">
+    <div class="max-w-5xl mx-auto px-4 py-4 text-center text-xs text-ink/50">
       &copy; {year} Airlines Locations. All rights reserved.
     </div>
   </div>

@@ -10,25 +10,26 @@ interface Props {
 const { pages } = Astro.props;
 ---
 
-{pages.length > 0 && (
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+{pages.length > 0 ? (
+  <div class="card-grid">
     {pages.map((page) => (
-      <a
-        href={`/${page.fullPath}`}
-        class="group block rounded-xl border border-ink/10 bg-white overflow-hidden shadow-sm hover:border-brand-light hover:shadow-md transition-[border-color,box-shadow] duration-200"
-      >
-        <div class="aspect-[4/3] bg-surface">
+      <a href={`/${page.fullPath}`} class="card" data-title={page.title.toLowerCase()}>
+        <div class="card__media">
           <img
             src={page.featuredImage ?? fallbackImage.src}
-            alt={page.title}
+            alt=""
             width="640"
-            height="480"
+            height="400"
             loading="lazy"
-            class="w-full h-full object-cover"
+            decoding="async"
           />
         </div>
-        <h3 class="font-semibold text-ink group-hover:text-brand transition-colors p-4">{page.title}</h3>
+        <div class="card__body">
+          <p class="card__title">{page.title}</p>
+        </div>
       </a>
     ))}
   </div>
+) : (
+  <p class="text-ink/60 text-sm py-8 text-center">No pages have been published under this section yet.</p>
 )}

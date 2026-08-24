@@ -1,25 +1,11 @@
 ---
-// Hand-built landing page. SSR (prerender = false) so the airline directory
-// count/list below never goes stale between deploys.
-//
-// Design read (design-taste-frontend skill, Section 0.B): an SEO-first
-// informational directory for travelers who mostly land on deep pages from
-// Google - utility/lookup-tool clarity over agency-experimental, built on
-// Tailwind + one self-hosted Inter family used at weight/tracking for
-// display instead of a separate serif (see src/styles/global.css). Dials:
-// DESIGN_VARIANCE 5 (asymmetric split hero, varied section rhythm - not
-// perfectly symmetric, not chaotic), MOTION_INTENSITY 4 (CSS transitions +
-// scroll-reveal, no scroll-hijacking), VISUAL_DENSITY 4 (room to breathe
-// without going gallery-airy - deep pages carry real lookup content). Astro
-// has no React runtime, so Motion/GSAP-specific patterns from the skill
-// translate to vanilla CSS transitions + IntersectionObserver below. The
-// hand-drawn stroke-icon style is kept deliberately - it's already used
-// consistently sitewide, not a fresh default reach.
+// Hand-built landing page. SSR (prerender = false) so the directory data
+// below never goes stale between deploys.
 export const prerender = false;
 
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getPagesByTemplateSuffix, getPosts } from "../lib/wp";
-import fallbackImage from "../assets/images/airpp.webp";
+import { getPageTree, getPagesByTemplateSuffix, getPosts, isChildTemplate } from "../lib/wp";
+import heroImage from "../assets/images/airpp.webp";
 
 Astro.response.headers.set("Cache-Control", "no-store");
 
@@ -30,260 +16,161 @@ const siteSchema = {
   url: Astro.site?.toString(),
 };
 
-// Same query the /airlines directory page uses - one live fetch, reused for
-// both the stat strip's live count and the featured carousel below, instead
-// of fetching twice.
-// Each call degrades to an empty list on its own rather than failing the
-// whole page - unlike /airlines or a WP content page (which exist purely to
-// show this data, so a WP outage should fail loudly there), the homepage
-// has its own standalone hero/sections and shouldn't go down site-wide over
-// a WordPress hiccup.
-const [airlines, latestPosts] = await Promise.all([
+// One shared page-tree fetch, reused for both the "Latest Pages" and
+// "Featured Airlines" sections below instead of fetching twice. Each call
+// degrades to an empty list on its own rather than failing the whole page -
+// the homepage has its own standalone sections and shouldn't go down
+// site-wide over a WordPress hiccup.
+const [tree, airlines, latestPosts] = await Promise.all([
+  getPageTree().catch(() => null),
   getPagesByTemplateSuffix("airlines-parent.php").catch(() => []),
   getPosts().catch(() => []),
 ]);
 
-const featuredAirlines = airlines.slice(0, 8);
-const newsItems = latestPosts.slice(0, 4);
+// Every *-child.php page sitewide, newest first - the naming convention
+// shared with ChildPageLayout's sidebar (see src/lib/wp.ts). Each card also
+// shows its parent page's title (e.g. the airline a location belongs to) as
+// a listing-style category line, purely presentational - looked up from the
+// already-fetched tree, no extra query.
+const latestChildPages = tree
+  ? tree.list.filter((p) => isChildTemplate(p.template)).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 16)
+  : [];
+const parentTitleOf = (parentId: number) => (tree ? tree.byId.get(parentId)?.title : undefined);
+
+const featuredAirlines = airlines.slice(0, 5);
+const newsItems = latestPosts.slice(0, 3);
 const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 ---
 
 <BaseLayout
   title="Find Airlines and Their Locations Worldwide | Airlines Locations"
   description="Search airlines and find their offices, contact details, and locations in one directory."
-  fullBleed
 >
   <script type="application/ld+json" set:html={JSON.stringify(siteSchema)} is:inline />
 
-  <!-- =========================================================
-       1. HERO - asymmetric split (text left, route-art right)
-  ========================================================== -->
-  <section class="hero-split">
-    <div class="hero-split__text">
-      <h1>Every airline. Every location.</h1>
-      <p>Search verified contact details, offices, and locations for airlines worldwide, all in one directory.</p>
+  <!-- 1. HERO — background photo, h1, subheading, then a search card
+       overlapping the photo's bottom edge (search-over-photo listings
+       pattern), with a small stat line underneath. -->
+  <section class="hero-photo">
+    <div class="hero-photo__bg">
+      <img src={heroImage.src} alt="" width="1600" height="900" fetchpriority="high" decoding="async" />
+    </div>
+    <div class="hero-photo__scrim" aria-hidden="true"></div>
+    <div class="hero-photo__inner">
+      <h1>Find any airline's contact details in seconds.</h1>
+      <p>Search offices, phone numbers, and locations for airlines worldwide, gathered in one place.</p>
+    </div>
+  </section>
 
-      <form class="hero-search" action="/airlines" method="get">
-        <label for="hero-search-input" class="visually-hidden">Search airlines by name</label>
+  <div class="search-card">
+    <form class="search-form" action="/airlines" method="get">
+      <label for="hero-search-input" class="visually-hidden">Search airlines by name</label>
+      <div class="search-form__field">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" stroke-linecap="round" /></svg>
         <input id="hero-search-input" name="q" type="text" placeholder="Search airlines by name…" autocomplete="off" />
-        <button type="submit">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" stroke-linecap="round" /></svg>
-          <span>Search</span>
-        </button>
-      </form>
-    </div>
-
-    <div class="hero-split__art" aria-hidden="true">
-      <svg class="route-art" viewBox="0 0 400 480" preserveAspectRatio="xMidYMid meet">
-        <path id="hero-route-path" d="M 290 90 Q 130 250 110 410" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round" />
-        <circle cx="290" cy="90" r="7" fill="#fff" />
-        <circle cx="290" cy="90" r="7" fill="#fff" class="route-pulse" />
-        <circle cx="110" cy="410" r="7" fill="#fff" />
-        <circle cx="110" cy="410" r="7" fill="#fff" class="route-pulse" />
-        <path class="route-plane" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(-11 -11) scale(1.2)" />
-      </svg>
-    </div>
-  </section>
-
-  <!-- =========================================================
-       2. STAT STRIP - live numbers, no cards
-  ========================================================== -->
-  <section class="stat-strip">
-    <div class="stat-strip__inner">
-      <div class="stat-strip__item">
-        <span class="stat-strip__value">{airlines.length}</span>
-        <span class="stat-strip__label">Airlines listed</span>
       </div>
-      <div class="stat-strip__item">
-        <span class="stat-strip__value">Free</span>
-        <span class="stat-strip__label">Always free to search</span>
+      <button type="submit">Search</button>
+    </form>
+  </div>
+  <p class="hero-stat">{airlines.length} airlines listed, updated regularly.</p>
+
+  <!-- 2. THREE ICON CARDS -->
+  <section class="mt-14 mb-14">
+    <div class="icon-card-grid">
+      <div class="icon-card">
+        <div class="icon-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" /></svg>
+        </div>
+        <p class="icon-card__title">Global coverage</p>
+        <p class="icon-card__desc">Airlines and offices listed from across the world.</p>
       </div>
-      <div class="stat-strip__item">
-        <span class="stat-strip__value">24/7</span>
-        <span class="stat-strip__label">Available anytime</span>
+      <div class="icon-card">
+        <div class="icon-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
+        </div>
+        <p class="icon-card__title">Airlines directory</p>
+        <p class="icon-card__desc">Browse every listed carrier in one place.</p>
+      </div>
+      <div class="icon-card">
+        <div class="icon-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></svg>
+        </div>
+        <p class="icon-card__title">Always free</p>
+        <p class="icon-card__desc">No account and no paywall, ever.</p>
       </div>
     </div>
   </section>
 
-  <!-- =========================================================
-       3. VALUE - short intro + divided list (not equal cards)
-  ========================================================== -->
-  <section class="value-section">
-    <div class="value-section__intro">
-      <h2>One place for every airline you need to reach</h2>
-      <p>Contact details, offices, and locations for airlines worldwide, gathered in one place instead of a dozen different websites.</p>
-      <a class="btn btn--primary" href="/airlines">Browse all airlines</a>
-    </div>
-
-    <ul class="value-list">
-      <li class="value-list__item">
-        <div class="value-list__icon">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z" /><path d="m9 12 2 2 4-4" /></svg>
-        </div>
-        <div>
-          <p class="value-list__title">Verified details</p>
-          <p class="value-list__desc">Every listing is checked so the contact details and locations you find here are accurate and current.</p>
-        </div>
-      </li>
-      <li class="value-list__item">
-        <div class="value-list__icon">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" /></svg>
-        </div>
-        <div>
-          <p class="value-list__title">Global coverage</p>
-          <p class="value-list__desc">From major carriers to regional airlines, search across locations worldwide in one directory.</p>
-        </div>
-      </li>
-      <li class="value-list__item">
-        <div class="value-list__icon">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></svg>
-        </div>
-        <div>
-          <p class="value-list__title">Always free</p>
-          <p class="value-list__desc">No account and no paywall. Search and browse the full directory at no cost, any time.</p>
-        </div>
-      </li>
-    </ul>
-  </section>
-
-  <!-- =========================================================
-       4. FEATURED AIRLINES - horizontal scroll-snap carousel
-  ========================================================== -->
-  <section class="guide-section" id="featured-airlines">
-    <div class="guide-section__header">
-      <h2>Featured airlines</h2>
-    </div>
-
-    {featuredAirlines.length > 0 ? (
-      <Fragment>
-        <div class="guide-track">
-          {featuredAirlines.map((page) => (
-            <a class="guide-card guide-card--plain" href={`/${page.fullPath}`}>
-              <span class="guide-card__title">{page.title}</span>
-              <span class="guide-card__arrow" aria-hidden="true">→</span>
-            </a>
-          ))}
-        </div>
-
-        <div class="guide-nav">
-          <button type="button" class="guide-nav__btn" data-slide="prev" aria-label="Previous">
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-          </button>
-          <button type="button" class="guide-nav__btn" data-slide="next" aria-label="Next">
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-          </button>
-        </div>
-      </Fragment>
+  <!-- 3. LATEST PAGES — 4 columns, 16 cards, *-child.php templates only -->
+  <section class="mb-14">
+    <h2 class="text-2xl font-bold tracking-tight mb-4">Latest Pages</h2>
+    {latestChildPages.length > 0 ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {latestChildPages.map((page) => (
+          <a href={`/${page.fullPath}`} class="card">
+            <div class="card__media">
+              <img src={page.featuredImage ?? heroImage.src} alt="" width="400" height="300" loading="lazy" decoding="async" />
+            </div>
+            <div class="card__body">
+              {parentTitleOf(page.parent) && <p class="card__kicker">{parentTitleOf(page.parent)}</p>}
+              <p class="card__title">{page.title}</p>
+            </div>
+          </a>
+        ))}
+      </div>
     ) : (
-      <p class="text-ink/60">No airlines listed yet. Check back soon.</p>
+      <p class="text-ink/60 text-sm">Nothing listed yet. Check back soon.</p>
     )}
   </section>
 
-  <!-- =========================================================
-       5. HOW IT WORKS - horizontal process row, not a card grid
-  ========================================================== -->
-  <section class="process-section">
-    <h2>Finding an airline's details takes three steps</h2>
-
-    <div class="process-row">
-      <div class="process-step">
-        <span class="process-step__num">1</span>
-        <p>Search or browse the directory by airline name.</p>
-      </div>
-      <div class="process-step__connector" aria-hidden="true"></div>
-      <div class="process-step">
-        <span class="process-step__num">2</span>
-        <p>Open a listing to see its offices, contact details, and locations.</p>
-      </div>
-      <div class="process-step__connector" aria-hidden="true"></div>
-      <div class="process-step">
-        <span class="process-step__num">3</span>
-        <p>Reach out directly. No middleman, no sign-up.</p>
-      </div>
+  <!-- 4. FEATURED AIRLINES — 5 cards, featured image + airline name -->
+  <section class="mb-14">
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-2xl font-bold tracking-tight">Featured Airlines</h2>
+      <a href="/airlines" class="view-all">View all airlines →</a>
     </div>
+    {featuredAirlines.length > 0 ? (
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
+        {featuredAirlines.map((page) => (
+          <a href={`/${page.fullPath}`} class="card">
+            <div class="card__media">
+              <img src={page.featuredImage ?? heroImage.src} alt="" width="320" height="240" loading="lazy" decoding="async" />
+            </div>
+            <div class="card__body">
+              <p class="card__title">{page.title}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p class="text-ink/60 text-sm">No airlines listed yet. Check back soon.</p>
+    )}
   </section>
 
-  <!-- =========================================================
-       6. FOR AIRLINES - split with photo
-  ========================================================== -->
-  <section class="partner-section">
-    <div class="partner-section__inner">
-      <div class="partner-section__content">
-        <h2>Are you an airline?</h2>
-        <p>If your airline isn't listed yet, or your details have changed, get your locations and contact information added or updated on Airlines Locations.</p>
-        <div class="partner-section__actions">
-          <a class="btn btn--primary" href="mailto:hello@airlineslocations.com">Get listed</a>
-          <a class="btn btn--outline" href="/airlines">See current listings</a>
-        </div>
-      </div>
-      <div class="partner-section__media">
-        <!-- No real airline-office/partner photography exists for this
-             brand yet. A random stock placeholder (tried: Picsum) would
-             show unrelated, potentially confusing imagery (a seeded Picsum
-             URL returned an ocean/rocks photo when tested here) next to
-             this content, which is worse for a real production page than
-             an honest brand-toned panel. Swap for a real photo when one is
-             available. -->
-        <div class="partner-section__art">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" /></svg>
-        </div>
-        <div class="partner-section__stat">
-          <span class="partner-section__stat-value">{airlines.length}</span>
-          <span class="partner-section__stat-label">airline{airlines.length === 1 ? "" : "s"} already listed</span>
-        </div>
-      </div>
+  <!-- 5. LATEST BLOG POSTS — 3 cards -->
+  <section>
+    <div class="flex items-baseline justify-between mb-4">
+      <h2 class="text-2xl font-bold tracking-tight">From the blog</h2>
+      <a href="/blog" class="view-all">View all posts →</a>
     </div>
-  </section>
-
-  <!-- =========================================================
-       7. FROM THE BLOG
-  ========================================================== -->
-  <section class="news-section">
-    <h2>From the blog</h2>
-
     {newsItems.length > 0 ? (
-      <div class="news-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {newsItems.map((post) => (
-          <article class="news-card">
-            <a href={`/blog/${post.slug}`} class="news-card__media">
-              <img src={post.featuredImage ?? fallbackImage.src} alt="" width="500" height="360" loading="lazy" decoding="async">
+          <article class="card">
+            <a href={`/blog/${post.slug}`} class="card__media">
+              <img src={post.featuredImage ?? heroImage.src} alt="" width="480" height="360" loading="lazy" decoding="async" />
             </a>
-            <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
-            <time datetime={post.date} class="news-card__date">{postDateFormatter.format(new Date(post.date))}</time>
-            <div class="news-card__excerpt" set:html={post.excerpt} />
-            <a href={`/blog/${post.slug}`} class="news-card__cta">Read more →</a>
+            <div class="card__body">
+              <p class="card__title"><a href={`/blog/${post.slug}`}>{post.title}</a></p>
+              <time datetime={post.date} class="card__meta block mt-1">{postDateFormatter.format(new Date(post.date))}</time>
+              <div class="card__excerpt" set:html={post.excerpt} />
+              <a href={`/blog/${post.slug}`} class="card__cta">Read more →</a>
+            </div>
           </article>
         ))}
       </div>
     ) : (
-      <p class="news-section__empty">No posts published yet. Check back soon.</p>
+      <p class="text-ink/60 text-sm">No posts published yet. Check back soon.</p>
     )}
   </section>
-
-  <script>
-    // ---- Featured-airlines slider: horizontal scroll-snap, no carousel library ----
-    const guideTrack = document.querySelector<HTMLElement>(".guide-track");
-    const slideButtons = document.querySelectorAll<HTMLButtonElement>(".guide-nav__btn[data-slide]");
-
-    function updateSlideButtons() {
-      if (!guideTrack) return;
-      const atStart = guideTrack.scrollLeft <= 4;
-      const atEnd = guideTrack.scrollLeft >= guideTrack.scrollWidth - guideTrack.clientWidth - 4;
-      slideButtons.forEach((button) => {
-        button.disabled = button.dataset.slide === "prev" ? atStart : atEnd;
-      });
-    }
-
-    slideButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        if (!guideTrack) return;
-        const card = guideTrack.querySelector<HTMLElement>(".guide-card");
-        const amount = (card?.getBoundingClientRect().width ?? 220) + 18;
-        guideTrack.scrollBy({ left: button.dataset.slide === "prev" ? -amount : amount, behavior: "smooth" });
-      });
-    });
-
-    guideTrack?.addEventListener("scroll", updateSlideButtons, { passive: true });
-    updateSlideButtons();
-  </script>
 </BaseLayout>

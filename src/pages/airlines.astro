@@ -25,30 +25,26 @@ Astro.response.headers.set("Cache-Control", "no-store");
 
 <BaseLayout title="Airlines | Airlines Locations" description="Airlines operating at Airlines Locations.">
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Airlines" }]} />
-  <h1 class="text-3xl font-bold mb-6">Airlines</h1>
+  <h1 class="text-2xl font-bold mb-6">Airlines</h1>
 
-  <!-- Same search control as the homepage hero (.hero-search, global.css) —
+  <!-- Same search control as the homepage hero (.search-form, global.css) —
        one search affordance, styled identically wherever it appears. -->
-  <form class="hero-search mb-8" method="get">
-    <label for="airlines-search-input" class="sr-only">Search airlines by name</label>
-    <input id="airlines-search-input" name="q" type="text" value={query} placeholder="Search airlines by name…" autocomplete="off" />
-    <button type="submit">
+  <form class="search-form mb-8" method="get">
+    <label for="airlines-search-input" class="visually-hidden">Search airlines by name</label>
+    <div class="search-form__field">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" stroke-linecap="round" /></svg>
-      <span>Search</span>
-    </button>
+      <input id="airlines-search-input" name="q" type="text" value={query} placeholder="Search airlines by name…" autocomplete="off" />
+    </div>
+    <button type="submit">Search</button>
   </form>
 
   {results.length > 0 ? (
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="card-grid">
       {results.map((page) => (
-        <a href={`/${page.fullPath}`} class="ticket-stub">
-          <span class="ticket-stub__main">{page.title}</span>
-          <span class="ticket-stub__tear" aria-hidden="true"></span>
-          <span class="ticket-stub__end" aria-hidden="true">
-            <svg class="ticket-stub__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" />
-            </svg>
-          </span>
+        <a href={`/${page.fullPath}`} class="card">
+          <div class="card__body">
+            <p class="card__title">{page.title}</p>
+          </div>
         </a>
       ))}
     </div>

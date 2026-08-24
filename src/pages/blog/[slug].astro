@@ -34,11 +34,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 >
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
   <article>
-    <img src={post.featuredImage ?? fallbackImage.src} alt="" width="1200" height="480" class="w-full h-64 object-cover rounded-xl mb-6" />
+    <img src={post.featuredImage ?? fallbackImage.src} alt="" width="1200" height="480" class="w-full h-64 object-cover rounded-md border border-[var(--line)] mb-6" />
     <time datetime={post.date} class="text-sm text-ink/60">
       {dateFormatter.format(new Date(post.date))}
     </time>
-    <h1 class="text-3xl font-bold mt-2 mb-6">{post.title}</h1>
+    <h1 class="text-2xl font-bold mt-2 mb-6">{post.title}</h1>
     <div class="prose" set:html={post.content} />
   </article>
   <p class="mt-8"><a href="/blog" class="text-brand underline">← Back to Blog</a></p>

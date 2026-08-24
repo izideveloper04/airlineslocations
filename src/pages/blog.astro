@@ -2,10 +2,9 @@
 // Hand-built listing page (not a single WP record) — lists published WP
 // posts as cards, newest first. "blog" is reserved in RESERVED_SLUGS
 // (wp.ts) so a WP page can never shadow this route. Each card links to
-// src/pages/blog/[slug].astro for the full post. Reuses the same
-// .news-grid/.news-card styling as the homepage's "News and Promotions"
-// section (src/styles/global.css) so a post looks the same whether it's
-// found there or on this full listing.
+// src/pages/blog/[slug].astro for the full post. Reuses the same .card
+// styling as the homepage's "From the blog" section (src/styles/global.css)
+// so a post looks the same whether it's found there or on this full listing.
 export const prerender = false;
 
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -22,23 +21,25 @@ Astro.response.headers.set("Cache-Control", "no-store");
 
 <BaseLayout title="Blog | Airlines Locations" description="News and updates from Airlines Locations.">
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
-  <h1 class="text-3xl font-bold mb-6">Blog</h1>
+  <h1 class="text-2xl font-bold mb-6">Blog</h1>
 
   {posts.length > 0 ? (
-    <div class="news-grid">
+    <div class="card-grid">
       {posts.map((post) => (
-        <article class="news-card">
-          <a href={`/blog/${post.slug}`} class="news-card__media">
-            <img src={post.featuredImage ?? fallbackImage.src} alt="" width="500" height="360" loading="lazy" decoding="async" />
+        <article class="card">
+          <a href={`/blog/${post.slug}`} class="card__media">
+            <img src={post.featuredImage ?? fallbackImage.src} alt="" width="500" height="320" loading="lazy" decoding="async" />
           </a>
-          <h3><a href={`/blog/${post.slug}`}>{post.title}</a></h3>
-          <time datetime={post.date} class="news-card__date">{dateFormatter.format(new Date(post.date))}</time>
-          <div class="news-card__excerpt" set:html={post.excerpt} />
-          <a href={`/blog/${post.slug}`} class="news-card__cta">Read more →</a>
+          <div class="card__body">
+            <p class="card__title"><a href={`/blog/${post.slug}`}>{post.title}</a></p>
+            <time datetime={post.date} class="card__meta block mt-1">{dateFormatter.format(new Date(post.date))}</time>
+            <div class="card__excerpt" set:html={post.excerpt} />
+            <a href={`/blog/${post.slug}`} class="card__cta">Read more →</a>
+          </div>
         </article>
       ))}
     </div>
   ) : (
-    <p class="news-section__empty">No posts published yet.</p>
+    <p class="text-ink/60 text-sm">No posts published yet.</p>
   )}
 </BaseLayout>

@@ -29,6 +29,8 @@ const breadcrumbItems = [
   ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
   { label: page.title },
 ];
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 ---
 
 <BaseLayout
@@ -41,10 +43,13 @@ const breadcrumbItems = [
 >
   <Breadcrumbs items={breadcrumbItems} />
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
     <article class="md:col-span-2">
-      <FeaturedImage src={page.featuredImage} />
-      <h1 class="text-3xl font-bold mb-6">{page.title}</h1>
+      <h1 class="text-2xl font-bold mb-4">{page.title}</h1>
+      <div class="mb-6"><FeaturedImage src={page.featuredImage} /></div>
+      <p class="text-sm text-ink/60 mb-4">
+        Last updated {dateFormatter.format(new Date(page.date))}
+      </p>
       <div class="prose" set:html={page.content} />
     </article>
     <PageSidebar pages={siblings} />
