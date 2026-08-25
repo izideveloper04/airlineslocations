@@ -1,6 +1,6 @@
 ---
 import type { WPPage } from "../lib/wp";
-import fallbackImage from "../assets/images/airpp.webp";
+import FeaturedImage from "./FeaturedImage.astro";
 
 interface Props {
   /** This parent page's direct children — rendered as a thumbnail + title card grid. */
@@ -15,14 +15,7 @@ const { pages } = Astro.props;
     {pages.map((page) => (
       <a href={`/${page.fullPath}`} class="card" data-title={page.title.toLowerCase()}>
         <div class="card__media">
-          <img
-            src={page.featuredImage ?? fallbackImage.src}
-            alt=""
-            width="640"
-            height="400"
-            loading="lazy"
-            decoding="async"
-          />
+          <FeaturedImage src={page.featuredImage} />
         </div>
         <div class="card__body">
           <p class="card__title">{page.title}</p>

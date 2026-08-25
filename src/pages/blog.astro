@@ -10,7 +10,7 @@ export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import { getPosts } from "../lib/wp";
-import fallbackImage from "../assets/images/airpp.webp";
+import FeaturedImage from "../components/FeaturedImage.astro";
 
 const posts = await getPosts();
 
@@ -28,7 +28,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
       {posts.map((post) => (
         <article class="card">
           <a href={`/blog/${post.slug}`} class="card__media">
-            <img src={post.featuredImage ?? fallbackImage.src} alt="" width="500" height="320" loading="lazy" decoding="async" />
+            <FeaturedImage src={post.featuredImage} />
           </a>
           <div class="card__body">
             <p class="card__title"><a href={`/blog/${post.slug}`}>{post.title}</a></p>

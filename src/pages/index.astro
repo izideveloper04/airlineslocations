@@ -4,7 +4,8 @@
 export const prerender = false;
 
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getPageTree, getPagesByTemplateSuffix, getPosts, isChildTemplate } from "../lib/wp";
+import FeaturedImage from "../components/FeaturedImage.astro";
+import { getPageTree, getPosts, isChildTemplate } from "../lib/wp";
 import heroImage from "../assets/images/airpp.webp";
 
 Astro.response.headers.set("Cache-Control", "no-store");
@@ -16,14 +17,13 @@ const siteSchema = {
   url: Astro.site?.toString(),
 };
 
-// One shared page-tree fetch, reused for both the "Latest Pages" and
-// "Featured Airlines" sections below instead of fetching twice. Each call
-// degrades to an empty list on its own rather than failing the whole page -
-// the homepage has its own standalone sections and shouldn't go down
-// site-wide over a WordPress hiccup.
-const [tree, airlines, latestPosts] = await Promise.all([
+// One shared page-tree fetch, reused for "Latest Pages" below (both the list
+// itself and each card's parent-title lookup). Each call degrades to an
+// empty list/null on its own rather than failing the whole page - the
+// homepage has its own standalone sections and shouldn't go down site-wide
+// over a WordPress hiccup.
+const [tree, latestPosts] = await Promise.all([
   getPageTree().catch(() => null),
-  getPagesByTemplateSuffix("airlines-parent.php").catch(() => []),
   getPosts().catch(() => []),
 ]);
 
@@ -37,7 +37,6 @@ const latestChildPages = tree
   : [];
 const parentTitleOf = (parentId: number) => (tree ? tree.byId.get(parentId)?.title : undefined);
 
-const featuredAirlines = airlines.slice(0, 5);
 const newsItems = latestPosts.slice(0, 3);
 const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 ---
@@ -45,132 +44,139 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
 <BaseLayout
   title="Find Airlines and Their Locations Worldwide | Airlines Locations"
   description="Search airlines and find their offices, contact details, and locations in one directory."
+  fullBleed
 >
   <script type="application/ld+json" set:html={JSON.stringify(siteSchema)} is:inline />
 
-  <!-- 1. HERO — background photo, h1, subheading, then a search card
-       overlapping the photo's bottom edge (search-over-photo listings
-       pattern), with a small stat line underneath. -->
-  <section class="hero-photo">
-    <div class="hero-photo__bg">
-      <img src={heroImage.src} alt="" width="1600" height="900" fetchpriority="high" decoding="async" />
-    </div>
-    <div class="hero-photo__scrim" aria-hidden="true"></div>
-    <div class="hero-photo__inner">
-      <h1>Find any airline's contact details in seconds.</h1>
-      <p>Search offices, phone numbers, and locations for airlines worldwide, gathered in one place.</p>
+  <!-- ========================= HERO ========================== -->
+  <section class="hero" style={`background-image:url(${heroImage.src})`}>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <span class="hero-eyebrow">Explore the World</span>
+      <h1>Everything You Need to Know, All in One Place</h1>
+      <p>
+        Discover useful information, guides, destinations, and resources to help you plan your next journey.
+      </p>
+      <div class="hero-buttons">
+        <a href="/airlines" class="btn btn-primary">Explore Now</a>
+        <a href="#" class="btn btn-outline">Learn More</a>
+      </div>
     </div>
   </section>
 
-  <div class="search-card">
-    <form class="search-form" action="/airlines" method="get">
-      <label for="hero-search-input" class="visually-hidden">Search airlines by name</label>
-      <div class="search-form__field">
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" stroke-linecap="round" /></svg>
-        <input id="hero-search-input" name="q" type="text" placeholder="Search airlines by name…" autocomplete="off" />
-      </div>
-      <button type="submit">Search</button>
-    </form>
-  </div>
-  <p class="hero-stat">{airlines.length} airlines listed, updated regularly.</p>
-
-  <!-- 2. THREE ICON CARDS -->
-  <section class="mt-14 mb-14">
-    <div class="icon-card-grid">
-      <div class="icon-card">
-        <div class="icon-card__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" /></svg>
+  <!-- ========================= USP / FEATURE CARDS ========================== -->
+  <section class="usp-section">
+    <div class="container">
+      <div class="usp-grid">
+        <div class="usp-card">
+          <div class="usp-icon">✈</div>
+          <h3>Reliable Information</h3>
+          <p>Get accurate and useful information presented in a simple and easy-to-understand way.</p>
         </div>
-        <p class="icon-card__title">Global coverage</p>
-        <p class="icon-card__desc">Airlines and offices listed from across the world.</p>
-      </div>
-      <div class="icon-card">
-        <div class="icon-card__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
+        <div class="usp-card">
+          <div class="usp-icon">🌎</div>
+          <h3>Worldwide Coverage</h3>
+          <p>Explore destinations and resources from locations around the world.</p>
         </div>
-        <p class="icon-card__title">Airlines directory</p>
-        <p class="icon-card__desc">Browse every listed carrier in one place.</p>
-      </div>
-      <div class="icon-card">
-        <div class="icon-card__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z" /></svg>
+        <div class="usp-card">
+          <div class="usp-icon">✓</div>
+          <h3>Easy to Explore</h3>
+          <p>Quickly find the information you need with our clean and user-friendly website.</p>
         </div>
-        <p class="icon-card__title">Always free</p>
-        <p class="icon-card__desc">No account and no paywall, ever.</p>
       </div>
     </div>
   </section>
 
-  <!-- 3. LATEST PAGES — 4 columns, 16 cards, *-child.php templates only -->
-  <section class="mb-14">
-    <h2 class="text-2xl font-bold tracking-tight mb-4">Latest Pages</h2>
-    {latestChildPages.length > 0 ? (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {latestChildPages.map((page) => (
-          <a href={`/${page.fullPath}`} class="card">
-            <div class="card__media">
-              <img src={page.featuredImage ?? heroImage.src} alt="" width="400" height="300" loading="lazy" decoding="async" />
-            </div>
-            <div class="card__body">
-              {parentTitleOf(page.parent) && <p class="card__kicker">{parentTitleOf(page.parent)}</p>}
-              <p class="card__title">{page.title}</p>
-            </div>
-          </a>
-        ))}
+  <!-- Display latest pages -->
+  <section class="latest-pages-section">
+    <div class="container">
+      <div class="section-heading">
+        <span class="section-eyebrow">Discover More</span>
+        <h2>Latest Pages</h2>
+        <p>Explore our latest pages and discover helpful information and resources.</p>
       </div>
-    ) : (
-      <p class="text-ink/60 text-sm">Nothing listed yet. Check back soon.</p>
-    )}
+      {latestChildPages.length > 0 ? (
+        <div class="pages-grid">
+          {latestChildPages.map((page) => (
+            <article class="page-card">
+              <a href={`/${page.fullPath}`}>
+                <div class="page-card-image">
+                  <FeaturedImage src={page.featuredImage} />
+                </div>
+                <div class="page-card-content">
+                  {parentTitleOf(page.parent) && <span class="blog-meta">{parentTitleOf(page.parent)}</span>}
+                  <h3>{page.title}</h3>
+                  <span class="read-more">Read More →</span>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p class="text-center" style="color:#667085">No pages have been published yet.</p>
+      )}
+    </div>
   </section>
 
-  <!-- 4. FEATURED AIRLINES — 5 cards, featured image + airline name -->
-  <section class="mb-14">
-    <div class="flex items-baseline justify-between mb-4">
-      <h2 class="text-2xl font-bold tracking-tight">Featured Airlines</h2>
-      <a href="/airlines" class="view-all">View all airlines →</a>
-    </div>
-    {featuredAirlines.length > 0 ? (
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
-        {featuredAirlines.map((page) => (
-          <a href={`/${page.fullPath}`} class="card">
-            <div class="card__media">
-              <img src={page.featuredImage ?? heroImage.src} alt="" width="320" height="240" loading="lazy" decoding="async" />
-            </div>
-            <div class="card__body">
-              <p class="card__title">{page.title}</p>
-            </div>
-          </a>
-        ))}
+  <!-- ========================= ABOUT US ========================== -->
+  <section class="about-section">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-image">
+          <img
+            src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=80"
+            alt="World map and travel planning"
+            loading="lazy"
+          />
+        </div>
+        <div class="about-content">
+          <span class="section-eyebrow">About Us</span>
+          <h2>Helping You Explore With Confidence</h2>
+          <p>
+            We are dedicated to providing useful, accessible, and easy-to-understand information for travelers around
+            the world.
+          </p>
+          <p>
+            Our goal is to bring important travel information together in one convenient place, helping you make
+            better decisions before and during your journey.
+          </p>
+          <a href="#" class="btn btn-primary">Learn About Us</a>
+        </div>
       </div>
-    ) : (
-      <p class="text-ink/60 text-sm">No airlines listed yet. Check back soon.</p>
-    )}
+    </div>
   </section>
 
-  <!-- 5. LATEST BLOG POSTS — 3 cards -->
-  <section>
-    <div class="flex items-baseline justify-between mb-4">
-      <h2 class="text-2xl font-bold tracking-tight">From the blog</h2>
-      <a href="/blog" class="view-all">View all posts →</a>
-    </div>
-    {newsItems.length > 0 ? (
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        {newsItems.map((post) => (
-          <article class="card">
-            <a href={`/blog/${post.slug}`} class="card__media">
-              <img src={post.featuredImage ?? heroImage.src} alt="" width="480" height="360" loading="lazy" decoding="async" />
-            </a>
-            <div class="card__body">
-              <p class="card__title"><a href={`/blog/${post.slug}`}>{post.title}</a></p>
-              <time datetime={post.date} class="card__meta block mt-1">{postDateFormatter.format(new Date(post.date))}</time>
-              <div class="card__excerpt" set:html={post.excerpt} />
-              <a href={`/blog/${post.slug}`} class="card__cta">Read more →</a>
-            </div>
-          </article>
-        ))}
+  <!-- Display latest blog -->
+  <section class="latest-blog-section">
+    <div class="container">
+      <div class="section-heading">
+        <span class="section-eyebrow">From Our Blog</span>
+        <h2>Latest Blog Posts</h2>
+        <p>Read our latest articles, guides, tips, and travel stories.</p>
       </div>
-    ) : (
-      <p class="text-ink/60 text-sm">No posts published yet. Check back soon.</p>
-    )}
+      {newsItems.length > 0 ? (
+        <div class="blog-grid">
+          {newsItems.map((post) => (
+            <article class="blog-card">
+              <a href={`/blog/${post.slug}`}>
+                <div class="blog-image">
+                  <FeaturedImage src={post.featuredImage} />
+                </div>
+              </a>
+              <div class="blog-content">
+                <time datetime={post.date} class="blog-meta">{postDateFormatter.format(new Date(post.date))}</time>
+                <h3>
+                  <a href={`/blog/${post.slug}`}>{post.title}</a>
+                </h3>
+                <div set:html={post.excerpt} />
+                <a href={`/blog/${post.slug}`} class="read-more">Read Article →</a>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p class="text-center" style="color:#667085">No blog posts published yet.</p>
+      )}
+    </div>
   </section>
 </BaseLayout>

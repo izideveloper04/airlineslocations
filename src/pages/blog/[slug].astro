@@ -7,7 +7,7 @@ export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import { getPostBySlug, getSiteSettings, resolvePageMeta } from "../../lib/wp";
-import fallbackImage from "../../assets/images/airpp.webp";
+import FeaturedImage from "../../components/FeaturedImage.astro";
 
 Astro.response.headers.set("Cache-Control", "no-store");
 
@@ -34,7 +34,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 >
   <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
   <article>
-    <img src={post.featuredImage ?? fallbackImage.src} alt="" width="1200" height="480" class="w-full h-64 object-cover rounded-md border border-[var(--line)] mb-6" />
+    <FeaturedImage
+      src={post.featuredImage}
+      eager
+      class="w-full h-64 object-cover rounded-md border border-[var(--line)] mb-6"
+    />
     <time datetime={post.date} class="text-sm text-ink/60">
       {dateFormatter.format(new Date(post.date))}
     </time>

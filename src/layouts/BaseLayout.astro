@@ -11,9 +11,11 @@ interface Props {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  /** Escapes the default centered/padded <main> for edge-to-edge landing pages. */
+  fullBleed?: boolean;
 }
 
-const { title, description, canonical, ogTitle, ogDescription, ogImage } = Astro.props;
+const { title, description, canonical, ogTitle, ogDescription, ogImage, fullBleed = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -46,7 +48,7 @@ const { title, description, canonical, ogTitle, ogDescription, ogImage } = Astro
   </head>
   <body class="min-h-screen flex flex-col bg-white text-ink font-sans antialiased">
     <Header />
-    <main class="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+    <main class={fullBleed ? "flex-1 w-full" : "flex-1 w-full max-w-5xl mx-auto px-4 py-8"}>
       <slot />
     </main>
     <Footer />
