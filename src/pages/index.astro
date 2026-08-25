@@ -52,14 +52,28 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
   <section class="hero" style={`background-image:url(${heroImage.src})`}>
     <div class="hero-overlay"></div>
     <div class="container hero-content">
-      <span class="hero-eyebrow">Explore the World</span>
-      <h1>Everything You Need to Know, All in One Place</h1>
-      <p>
-        Discover useful information, guides, destinations, and resources to help you plan your next journey.
-      </p>
-      <div class="hero-buttons">
-        <a href="/airlines" class="btn btn-primary">Explore Now</a>
-        <a href="#" class="btn btn-outline">Learn More</a>
+      <div class="hero-text">
+        <span class="hero-eyebrow">Explore the World</span>
+        <h1>Everything You Need to Know, All in One Place</h1>
+        <p>
+          Discover useful information, guides, destinations, and resources to help you plan your next journey.
+        </p>
+      </div>
+
+      <div class="hero-search-card">
+        <h2>Search Airlines</h2>
+        <form class="search-form" action="/airlines" method="get">
+          <label for="hero-search-input" class="visually-hidden">Search airlines by name</label>
+          <div class="search-form__field">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+            </svg>
+            <input id="hero-search-input" name="q" type="text" placeholder="Search airlines by name…" autocomplete="off" />
+          </div>
+          <button type="submit">Search</button>
+        </form>
+        <a href="#" class="btn btn-primary">Call Now</a>
       </div>
     </div>
   </section>
@@ -69,18 +83,42 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
     <div class="container">
       <div class="usp-grid">
         <div class="usp-card">
-          <div class="usp-icon">✈</div>
-          <h3>Reliable Information</h3>
+          <svg class="usp-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <div class="usp-card-title">
+            <h3>Reliable Information</h3>
+            <span class="usp-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </span>
+          </div>
           <p>Get accurate and useful information presented in a simple and easy-to-understand way.</p>
         </div>
         <div class="usp-card">
-          <div class="usp-icon">🌎</div>
-          <h3>Worldwide Coverage</h3>
+          <svg class="usp-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" />
+          </svg>
+          <div class="usp-card-title">
+            <h3>Worldwide Coverage</h3>
+            <span class="usp-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </span>
+          </div>
           <p>Explore destinations and resources from locations around the world.</p>
         </div>
         <div class="usp-card">
-          <div class="usp-icon">✓</div>
-          <h3>Easy to Explore</h3>
+          <svg class="usp-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+          </svg>
+          <div class="usp-card-title">
+            <h3>Easy to Explore</h3>
+            <span class="usp-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </span>
+          </div>
           <p>Quickly find the information you need with our clean and user-friendly website.</p>
         </div>
       </div>
