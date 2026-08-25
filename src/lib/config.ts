@@ -3,3 +3,11 @@
 // go live. Defaults to staging/blocked so this can never accidentally ship
 // open by omission.
 export const isStaging = (process.env.STAGING ?? "true").toLowerCase() !== "false";
+
+// Shown on the "Call Now" card on every airline child page (see
+// ChildPageLayout.astro). No real support line has been confirmed yet -
+// swap in the real number and a matching tel: link here once one exists.
+export const supportPhone = {
+  display: "Add phone number",
+  href: "#",
+};
