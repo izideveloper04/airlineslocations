@@ -2,11 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Self-hosted, not the Google Fonts CDN. One weight-range variable font
-   covers the whole site — no separate static-weight files needed. */
+/* Self-hosted, not the Google Fonts CDN. One weight-range variable font per
+   family — no separate static-weight files needed. Jost for headings
+   (h1-h6, see the @layer base rule below), Outfit for everything else. */
 @font-face {
-  font-family: "Inter";
-  src: url("../assets/fonts/inter-variable.woff2") format("woff2-variations");
+  font-family: "Jost";
+  src: url("../assets/fonts/jost-variable.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Outfit";
+  src: url("../assets/fonts/outfit-variable.woff2") format("woff2");
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -36,7 +44,14 @@
   body {
     background: #fff;
     color: var(--ink);
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Every heading sitewide, including ones rendered from raw WP content
+     (.prose h1-h4) - a tag selector instead of a utility class so nothing
+     has to remember to opt in per-component. */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Jost", ui-sans-serif, system-ui, sans-serif;
   }
 
   a:focus-visible,

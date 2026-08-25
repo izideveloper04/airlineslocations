@@ -1,21 +1,20 @@
 # Fonts
 
-Self-hosted variable-font file:
+Two self-hosted variable-font files:
 
-- `inter-variable.woff2` — Inter, weights 400–700 in one file, used for both
-  body text and headings (see the `.font-display` class in
-  `src/styles/global.css` for how heading weight/tracking differ from body).
+- `jost-variable.woff2` — Jost, weights 400–800. Applied to every heading
+  (`h1`-`h6`, including ones rendered from raw WP content via `.prose`) via
+  a tag selector in `src/styles/global.css`'s `@layer base`, not a utility
+  class — nothing has to opt in per-component.
+- `outfit-variable.woff2` — Outfit, weights 400–700. Applied to `body`;
+  everything that isn't a heading inherits it.
 
 Referenced via `@font-face` in `src/styles/global.css` with a single ranged
-`font-weight: 400 700` rule rather than separate static-weight files — it's
-a variable font, so one file covers the whole range already used across the
-site.
+`font-weight` rule each rather than separate static-weight files — both are
+variable fonts, so one file per family covers the whole range used across
+the site.
 
 No CDN font loading anywhere in this project (see `README.md`'s non-goals)
 — self-hosted only, `font-display: swap` so text never blocks on font load.
-Inter is SIL Open Font License, which explicitly permits exactly this kind
-of self-hosting/redistribution.
-
-`fraunces-variable.woff2` previously lived here as a second (serif display)
-face; it's no longer referenced anywhere and can be deleted from this
-folder — left in place for now in case a future redesign wants it back.
+Both Jost and Outfit are SIL Open Font License, which explicitly permits
+exactly this kind of self-hosting/redistribution.

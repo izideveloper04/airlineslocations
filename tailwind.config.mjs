@@ -25,10 +25,11 @@ export default {
         surface: "#f4f7fb",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        // Same face as `sans` — display hierarchy comes from weight/tracking
-        // (see the font-display class in global.css), not a second typeface.
-        display: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["Outfit", "system-ui", "-apple-system", "sans-serif"],
+        // Headings sitewide use Jost automatically via the h1-h6 tag
+        // selector in global.css — this utility exists for the rare case
+        // something needs Jost on a non-heading element.
+        display: ["Jost", "system-ui", "-apple-system", "sans-serif"],
       },
       // Aliases the plain Tailwind shadow-sm/shadow-md utilities (already
       // used across several components) to the same --shadow-sm/--shadow-md

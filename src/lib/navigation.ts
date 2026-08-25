@@ -28,28 +28,7 @@ export const navItems: NavItem[] = [
   {
     label: "Airlines",
     href: "/airlines",
-    chevron: true,
-    submenu: [
-      { label: "Airlines Child Page", href: "/airlines-child-page" },
-      { label: "Airlines Child Page 2", href: "/airlines-child-page-2" },
-      { label: "Airlines Child Page 2 (2)", href: "/airlines-child-page-2-2" },
-      { label: "Airlines Child Page 3", href: "/airlines-child-page-3" },
-      { label: "Airlines Child Page zZz", href: "/airlines-child-page-zzz" },
-    ],
+    chevron: false,
   },
-  {
-    label: "Terminals",
-    href: "javascript:void(0)",
-    chevron: true,
-    submenu: [
-      { label: "Terminal 1", href: "/terminal-1" },
-      { label: "Terminal 2", href: "/terminal-2" },
-    ],
-  },
-  { label: "Map", href: "/airport-map", chevron: false },
-  { label: "Flights", href: null, chevron: true },
-  { label: "Passenger Info", href: null, chevron: true },
-  { label: "Car Rental", href: null, chevron: true },
-  { label: "Lounges", href: null, chevron: true },
   { label: "Blog", href: "/blog", chevron: false },
 ];
