@@ -12,10 +12,12 @@ export interface Crumb {
 }
 
 interface Props {
+  /** The trail after Home - Home itself is prepended automatically below, so callers never include it. */
   items: Crumb[];
 }
 
-const { items } = Astro.props;
+const { items: rest } = Astro.props;
+const items: Crumb[] = [{ label: "AirlinesLocations", href: "/" }, ...rest];
 
 const breadcrumbSchema = {
   "@context": "https://schema.org",

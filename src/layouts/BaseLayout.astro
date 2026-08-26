@@ -2,6 +2,7 @@
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { isStaging } from "../lib/config";
+import { getWpOrigin, type YoastHead } from "../lib/wp";
 import "../styles/global.css";
 
 interface Props {
@@ -11,11 +12,39 @@ interface Props {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  /** Yoast's structured-data graph (see YoastHead.schema in src/lib/wp.ts) - rewritten to this site's origin and injected as JSON-LD below. */
+  schema?: YoastHead["schema"];
   /** Escapes the default centered/padded <main> for edge-to-edge landing pages. */
   fullBleed?: boolean;
 }
 
-const { title, description, canonical, ogTitle, ogDescription, ogImage, fullBleed = false } = Astro.props;
+const { title, description, canonical, ogTitle, ogDescription, ogImage, schema, fullBleed = false } = Astro.props;
+
+// Yoast generates the WebSite node's SearchAction assuming a normal
+// (non-headless) WP front-end, where WordPress's own "?s=" query handles
+// search - so it always points at "<site>/?s={search_term_string}". This
+// site's actual search lives at /airlines?q=..., so that URL template is
+// swapped for the real one below rather than left pointing at a page that
+// silently ignores the query. (Only matters if Google ever surfaces this
+// site via its sitelinks search box - a discretionary SERP feature - but
+// it should point somewhere real either way.)
+if (schema && Astro.site) {
+  const searchUrl = `${new URL("/airlines", Astro.site)}?q={search_term_string}`;
+  for (const node of schema["@graph"]) {
+    if (node["@type"] !== "WebSite" || !Array.isArray(node.potentialAction)) continue;
+    for (const action of node.potentialAction as Record<string, unknown>[]) {
+      const target = action?.["@type"] === "SearchAction" ? (action.target as Record<string, unknown> | undefined) : undefined;
+      if (target) target.urlTemplate = searchUrl;
+    }
+  }
+}
+
+// Every other @id/url in Yoast's graph points at the WP origin (cms.*)
+// since that's what generated it - swapped for this site's own origin so
+// the FAQPage/BreadcrumbList/etc. nodes describe this site, not the CMS.
+const schemaJson = schema
+  ? JSON.stringify(schema).replaceAll(getWpOrigin(), Astro.site?.origin ?? "")
+  : null;
 ---
 
 <!doctype html>
@@ -50,6 +79,7 @@ const { title, description, canonical, ogTitle, ogDescription, ogImage, fullBlee
       <meta name="twitter:description" content={ogDescription ?? description} />
     )}
     {ogImage && <meta name="twitter:image" content={ogImage} />}
+    {schemaJson && <script type="application/ld+json" set:html={schemaJson} is:inline />}
   </head>
   <body class="min-h-screen flex flex-col bg-white text-ink font-sans antialiased">
     <Header />

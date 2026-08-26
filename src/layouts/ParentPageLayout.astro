@@ -16,7 +16,6 @@ const ancestors = getAncestorChain(page, tree);
 const children = await getChildren(page.id);
 
 const breadcrumbItems = [
-  { label: "Home", href: "/" },
   ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
   { label: page.title },
 ];
@@ -34,6 +33,7 @@ const SHOW_FILTER_THRESHOLD = 9;
   ogTitle={meta.ogTitle}
   ogDescription={meta.ogDescription}
   ogImage={meta.ogImage}
+  schema={meta.schema}
 >
   <!-- This template is a directory page, not a content page, so
        page.content is deliberately never rendered here. Children render as

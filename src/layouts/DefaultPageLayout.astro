@@ -15,7 +15,6 @@ const { page, tree, meta } = Astro.props;
 const ancestors = getAncestorChain(page, tree);
 
 const breadcrumbItems = [
-  { label: "Home", href: "/" },
   ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
   { label: page.title },
 ];
@@ -28,6 +27,7 @@ const breadcrumbItems = [
   ogTitle={meta.ogTitle}
   ogDescription={meta.ogDescription}
   ogImage={meta.ogImage}
+  schema={meta.schema}
 >
   <div class="page-hero">
     <div class="page-hero__main">

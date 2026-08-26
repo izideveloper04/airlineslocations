@@ -9,6 +9,13 @@
 // entirely separate from SITE_URL (the Node app's own domain) — no
 // derivation between the two, since they're independent vhosts.
 const WP_API_URL = (process.env.WP_API_URL ?? "http://localhost:8080/wp-json/wp/v2").replace(/\/+$/, "");
+
+/** The WP origin (e.g. https://cms.airlineslocations.com) - just for rewriting
+ *  the WP-origin URLs baked into Yoast's schema graph (see YoastHead.schema)
+ *  to this site's own origin before it's injected into a page's <head>. */
+export function getWpOrigin(): string {
+  return new URL(WP_API_URL).origin;
+}
 const PAGE_TREE_CACHE_TTL_MS =
   Number(process.env.PAGE_TREE_CACHE_TTL ?? 300) * 1000;
 
@@ -19,6 +26,18 @@ export interface YoastHead {
   og_title?: string;
   og_description?: string;
   og_image?: { url: string }[];
+  /**
+   * Yoast's full structured-data graph for this page/post - WebPage,
+   * BreadcrumbList, ImageObject, and (when the content has a Yoast FAQ
+   * block) FAQPage/Question/Answer nodes, among others. On a normal
+   * (non-headless) WP install Yoast injects this into <head> itself via
+   * wp_head; this REST field exists specifically so a headless frontend
+   * like this one can do the same. Every @id/url in it points at the WP
+   * origin (cms.*), not this site - resolvePageMeta leaves that alone,
+   * BaseLayout rewrites it to the live site's origin right before injecting
+   * the <script> tag (see getWpOrigin below).
+   */
+  schema?: { "@context": string; "@graph": Record<string, unknown>[] };
 }
 
 export interface WPPage {
@@ -388,6 +407,8 @@ export interface ResolvedPageMeta {
   ogTitle?: string;
   ogDescription?: string;
   ogImage?: string;
+  /** Yoast's raw structured-data graph, still WP-origin URLs - see YoastHead.schema. */
+  schema?: YoastHead["schema"];
 }
 
 /**
@@ -416,5 +437,6 @@ export function resolvePageMeta(page: { title: string; yoast: YoastHead | null }
     ogTitle: yoast?.og_title,
     ogDescription: yoast?.og_description,
     ogImage: yoast?.og_image?.[0]?.url,
+    schema: yoast?.schema,
   };
 }

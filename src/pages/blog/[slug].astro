@@ -31,10 +31,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
   ogTitle={meta.ogTitle}
   ogDescription={meta.ogDescription}
   ogImage={meta.ogImage}
+  schema={meta.schema}
 >
   <div class="page-hero">
     <div class="page-hero__main">
-      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
+      <Breadcrumbs items={[{ label: "Blog", href: "/blog" }, { label: post.title }]} />
       <h1 class="page-hero__title">{post.title}</h1>
       <time datetime={post.date} class="block text-sm text-ink/60 mt-2">
         {dateFormatter.format(new Date(post.date))}
