@@ -27,3 +27,6 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# SEO audit output (generated reports/screenshots, not site source)
+*-audit/
