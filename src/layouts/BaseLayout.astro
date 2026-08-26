@@ -25,6 +25,10 @@ const { title, description, canonical, ogTitle, ogDescription, ogImage, fullBlee
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     {isStaging && <meta name="robots" content="noindex, nofollow" />}
     {description && <meta name="description" content={description} />}
     <link rel="canonical" href={canonical ?? new URL(Astro.url.pathname, Astro.site).toString()} />

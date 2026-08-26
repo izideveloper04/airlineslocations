@@ -2,12 +2,25 @@
 // Purely presentational — the actual menu content lives in
 // src/lib/navigation.ts. Edit that file to add/remove/reorder items or
 // submenu entries; nothing here needs to change.
+import { Image } from "astro:assets";
 import { navItems } from "../lib/navigation";
+import logo from "../assets/images/logo/logo-airlinelocations.png";
 ---
 
 <header class="border-b border-[var(--line)] sticky top-0 z-40 bg-white">
   <div class="container h-16 flex items-center justify-between gap-8">
-    <a href="/" class="font-bold text-lg text-ink shrink-0">Airlines Locations</a>
+    <a href="/" class="shrink-0">
+      <Image
+        src={logo}
+        alt="Airlines Locations"
+        width={227}
+        height={40}
+        densities={[1, 2]}
+        loading="eager"
+        fetchpriority="high"
+        class="h-7 w-auto sm:h-9"
+      />
+    </a>
 
     <div class="flex items-center gap-6 min-w-0">
       <!-- overflow-x only below lg: an "auto" (or any non-visible) value on

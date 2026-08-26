@@ -21,6 +21,7 @@ const { src, alt = "", class: className, eager = false } = Astro.props;
     alt={alt}
     loading={eager ? "eager" : "lazy"}
     decoding="async"
+    draggable="false"
     class={className}
     {...(eager ? { fetchpriority: "high" } : {})}
   />
