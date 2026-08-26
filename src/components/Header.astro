@@ -9,53 +9,80 @@ import { navItems } from "../lib/navigation";
   <div class="container h-16 flex items-center justify-between gap-8">
     <a href="/" class="font-bold text-lg text-ink shrink-0">Airlines Locations</a>
 
-    <!-- overflow-x only below lg: an "auto" (or any non-visible) value on
-         either axis forces BOTH axes into a clipped scrollport per the CSS
-         overflow spec, which was silently clipping submenu dropdowns
-         below. Scoping it to narrow screens avoids that on desktop, where
-         hover dropdowns actually apply and all 8 items already fit anyway. -->
-    <nav aria-label="Primary" class="min-w-0 max-lg:overflow-x-auto lg:overflow-visible">
-      <ul class="flex items-center gap-6 text-sm font-medium text-ink whitespace-nowrap">
-        {navItems.map((item) => (
-          <li class:list={["relative", (item.submenu?.length ?? 0) > 0 && "group"]}>
-            {item.href && item.href !== "javascript:void(0)" ? (
-              <a href={item.href} class="inline-flex items-center gap-1 py-2 hover:text-brand">
-                {item.label}
-                {item.chevron && <span aria-hidden="true" class="text-ink/40">&#9662;</span>}
-              </a>
-            ) : item.href === "javascript:void(0)" ? (
-              /* Has a real submenu but no destination of its own — a
-                 dropdown trigger, not a link. Rendered as a button (not an
-                 <a href="javascript:void(0)">, a known anti-pattern) but
-                 styled identically to a real nav link since its submenu
-                 entries are real, unlike the `href: null` case below. */
-              <button type="button" class="inline-flex items-center gap-1 py-2 hover:text-brand" aria-haspopup="true">
-                {item.label}
-                {item.chevron && <span aria-hidden="true" class="text-ink/40">&#9662;</span>}
-              </button>
-            ) : (
-              <span class="inline-flex items-center gap-1 py-2 text-ink/40 cursor-default">
-                {item.label}
-                {item.chevron && <span aria-hidden="true">&#9662;</span>}
-              </span>
-            )}
+    <div class="flex items-center gap-6 min-w-0">
+      <!-- overflow-x only below lg: an "auto" (or any non-visible) value on
+           either axis forces BOTH axes into a clipped scrollport per the CSS
+           overflow spec, which was silently clipping submenu dropdowns
+           below. Scoping it to narrow screens avoids that on desktop, where
+           hover dropdowns actually apply and all 8 items already fit anyway. -->
+      <nav aria-label="Primary" class="min-w-0 max-lg:overflow-x-auto lg:overflow-visible">
+        <ul class="flex items-center gap-6 text-sm font-medium text-ink whitespace-nowrap">
+          {navItems.map((item) => (
+            <li class:list={["relative", (item.submenu?.length ?? 0) > 0 && "group"]}>
+              {item.href && item.href !== "javascript:void(0)" ? (
+                <a href={item.href} class="inline-flex items-center gap-1 py-2 hover:text-brand">
+                  {item.label}
+                  {item.chevron && <span aria-hidden="true" class="text-ink/40">&#9662;</span>}
+                </a>
+              ) : item.href === "javascript:void(0)" ? (
+                /* Has a real submenu but no destination of its own — a
+                   dropdown trigger, not a link. Rendered as a button (not an
+                   <a href="javascript:void(0)">, a known anti-pattern) but
+                   styled identically to a real nav link since its submenu
+                   entries are real, unlike the `href: null` case below. */
+                <button type="button" class="inline-flex items-center gap-1 py-2 hover:text-brand" aria-haspopup="true">
+                  {item.label}
+                  {item.chevron && <span aria-hidden="true" class="text-ink/40">&#9662;</span>}
+                </button>
+              ) : (
+                <span class="inline-flex items-center gap-1 py-2 text-ink/40 cursor-default">
+                  {item.label}
+                  {item.chevron && <span aria-hidden="true">&#9662;</span>}
+                </span>
+              )}
 
-            {item.submenu && item.submenu.length > 0 && (
-              <div class="absolute left-0 top-full pt-1 w-52 opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 transition-all duration-150 z-50">
-                <ul class="bg-white border border-[var(--line)] rounded-md shadow-sm py-1">
-                  {item.submenu.map((entry) => (
-                    <li>
-                      <a href={entry.href} class="block px-3 py-1.5 text-sm font-normal text-ink hover:bg-[var(--surface)] hover:text-brand">
-                        {entry.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
-    </nav>
+              {item.submenu && item.submenu.length > 0 && (
+                <div class="absolute left-0 top-full pt-1 w-52 opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 transition-all duration-150 z-50">
+                  <ul class="bg-white border border-[var(--line)] rounded-md shadow-sm py-1">
+                    {item.submenu.map((entry) => (
+                      <li>
+                        <a href={entry.href} class="block px-3 py-1.5 text-sm font-normal text-ink hover:bg-[var(--surface)] hover:text-brand">
+                          {entry.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <!-- Same airline-name search as the homepage hero and /airlines, just
+           compact enough to live in the navbar - hidden below lg where the
+           nav itself already needs the full row to scroll horizontally. -->
+      <form action="/airlines" method="get" class="hidden lg:flex items-center gap-1 h-9 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] pl-3 pr-1">
+        <label for="nav-search-input" class="visually-hidden">Search airlines by name</label>
+        <input
+          id="nav-search-input"
+          name="q"
+          type="text"
+          placeholder="Search airlines…"
+          autocomplete="off"
+          class="w-32 bg-transparent text-sm text-ink placeholder:text-ink/40 outline-none"
+        />
+        <button
+          type="submit"
+          aria-label="Search"
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:bg-brand-dark"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3.5 w-3.5">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </form>
+    </div>
   </div>
 </header>
