@@ -8,7 +8,15 @@ import FeaturedImage from "../components/FeaturedImage.astro";
 import { getPageTree, getPosts, isChildTemplate } from "../lib/wp";
 import heroImage from "../assets/images/airpp.webp";
 
-Astro.response.headers.set("Cache-Control", "no-store");
+// Unlike robots.txt/sitemap.xml/[...slug].astro, this page has no
+// STAGING-dependent output to worry a CDN into caching stale (the noindex
+// meta tag below is resolved live per-request too, since this route is SSR).
+// Its only freshness constraint is the same TTL-cached page tree every
+// content page already relies on (src/lib/wp.ts, PAGE_TREE_CACHE_TTL), so a
+// short edge-cacheable window is safe: real caching benefit for traffic
+// spikes, revalidated in the background rather than round-tripping to origin
+// on every single request.
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=30, stale-while-revalidate=60");
 
 const siteSchema = {
   "@context": "https://schema.org",

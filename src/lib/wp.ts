@@ -123,8 +123,11 @@ function apiUrl(path: string) {
   return withCacheBust(`${WP_API_URL.replace(/\/+$/, "")}${path}`);
 }
 
-/** Slugs that are hand-built Astro routes and must never be shadowed by a WP page. */
-const RESERVED_SLUGS = new Set(["", "api", "airlines", "blog"]);
+/** Slugs that are hand-built Astro routes and must never be shadowed by a WP page.
+ *  "home" is WordPress's own default sample page slug on a fresh install -
+ *  reserved so a leftover, never-deleted one can never leak into the page
+ *  tree as a second, competing homepage at /home. */
+const RESERVED_SLUGS = new Set(["", "api", "airlines", "blog", "home"]);
 
 async function fetchAllPages(): Promise<RawWPPage[]> {
   const perPage = 100;

@@ -42,8 +42,17 @@ if (schema && Astro.site) {
 // Every other @id/url in Yoast's graph points at the WP origin (cms.*)
 // since that's what generated it - swapped for this site's own origin so
 // the FAQPage/BreadcrumbList/etc. nodes describe this site, not the CMS.
+// Media URLs are the one exception: images actually live on the WP origin
+// (cms.*/wp-content/uploads/...), not this domain, so rewriting those too
+// produces an ImageObject/thumbnailUrl that 404s here. Split-and-rejoin
+// instead of a blanket replaceAll so each occurrence can be checked against
+// what immediately follows it before deciding which origin to keep.
+const wpOrigin = getWpOrigin();
+const siteOrigin = Astro.site?.origin ?? "";
 const schemaJson = schema
-  ? JSON.stringify(schema).replaceAll(getWpOrigin(), Astro.site?.origin ?? "")
+  ? JSON.stringify(schema)
+      .split(wpOrigin)
+      .reduce((acc, part) => (acc === null ? part : acc + (part.startsWith("/wp-content/uploads/") ? wpOrigin : siteOrigin) + part), null as string | null)
   : null;
 ---
 
