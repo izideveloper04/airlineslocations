@@ -32,17 +32,22 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
   ogDescription={meta.ogDescription}
   ogImage={meta.ogImage}
 >
-  <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
+  <div class="page-hero">
+    <div class="page-hero__main">
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog", href: "/blog" }, { label: post.title }]} />
+      <h1 class="page-hero__title">{post.title}</h1>
+      <time datetime={post.date} class="block text-sm text-ink/60 mt-2">
+        {dateFormatter.format(new Date(post.date))}
+      </time>
+    </div>
+  </div>
+
   <article>
     <FeaturedImage
       src={post.featuredImage}
       eager
       class="w-full h-64 object-cover rounded-md border border-[var(--line)] mb-6"
     />
-    <time datetime={post.date} class="text-sm text-ink/60">
-      {dateFormatter.format(new Date(post.date))}
-    </time>
-    <h1 class="text-2xl font-bold mt-2 mb-6">{post.title}</h1>
     <div class="prose" set:html={post.content} />
   </article>
   <p class="mt-8"><a href="/blog" class="text-brand underline">← Back to Blog</a></p>

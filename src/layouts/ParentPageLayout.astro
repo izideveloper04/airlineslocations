@@ -38,13 +38,17 @@ const SHOW_FILTER_THRESHOLD = 9;
   <!-- This template is a directory page, not a content page, so
        page.content is deliberately never rendered here. Children render as
        a card grid below, with no sidebar. -->
-  <Breadcrumbs items={breadcrumbItems} />
-  <h1 class="text-2xl font-bold mb-1">{page.title}</h1>
-  {children.length > 0 && (
-    <p class="text-sm text-ink/60 mb-6">
-      {children.length} {children.length === 1 ? "page" : "pages"} listed under {page.title}.
-    </p>
-  )}
+  <div class="page-hero">
+    <div class="page-hero__main">
+      <Breadcrumbs items={breadcrumbItems} />
+      <h1 class="page-hero__title">{page.title}</h1>
+      {children.length > 0 && (
+        <p class="text-sm text-ink/60 mt-2">
+          {children.length} {children.length === 1 ? "page" : "pages"} listed under {page.title}.
+        </p>
+      )}
+    </div>
+  </div>
 
   {children.length >= SHOW_FILTER_THRESHOLD && (
     <div class="mb-6 max-w-sm">

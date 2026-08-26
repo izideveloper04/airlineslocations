@@ -24,8 +24,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
 <BaseLayout title="Airlines | Airlines Locations" description="Airlines operating at Airlines Locations.">
-  <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Airlines" }]} />
-  <h1 class="text-2xl font-bold mb-6">Airlines</h1>
+  <div class="page-hero">
+    <div class="page-hero__main">
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Airlines" }]} />
+      <h1 class="page-hero__title">Airlines</h1>
+      <p class="text-sm text-ink/60 mt-2">
+        {results.length} {results.length === 1 ? "airline" : "airlines"} listed{query && ` matching "${query}"`}.
+      </p>
+    </div>
+  </div>
 
   <!-- Same search control as the homepage hero (.search-form, global.css) —
        one search affordance, styled identically wherever it appears. -->

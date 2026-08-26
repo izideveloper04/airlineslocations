@@ -20,8 +20,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
 <BaseLayout title="Blog | Airlines Locations" description="News and updates from Airlines Locations.">
-  <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
-  <h1 class="text-2xl font-bold mb-6">Blog</h1>
+  <div class="page-hero">
+    <div class="page-hero__main">
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
+      <h1 class="page-hero__title">Blog</h1>
+      <p class="text-sm text-ink/60 mt-2">
+        {posts.length} {posts.length === 1 ? "post" : "posts"} published.
+      </p>
+    </div>
+  </div>
 
   {posts.length > 0 ? (
     <div class="card-grid">
