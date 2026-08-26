@@ -9,7 +9,8 @@
     "postinstall": "astro build",
     "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "favicons": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^8.3.4",
@@ -21,6 +22,8 @@
     "@astrojs/check": "^0.9.9",
     "@types/node": "^26.1.2",
     "dotenv": "^17.4.2",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.3",
     "typescript": "^5.9.3"
   }
 }
