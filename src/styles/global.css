@@ -302,7 +302,7 @@
     box-shadow: var(--shadow-float);
     text-align: center;
   }
-  .call-card h2 {
+  .call-card  .call-card__heading {
     font-size: 1.1rem;
     font-weight: 700;
     margin-bottom: 14px;
@@ -578,4 +578,7 @@
 }
 .schema-faq-answer {
     margin: 0!important;
+}
+h2.wp-block-heading strong {
+    font-weight: bold;
 }
