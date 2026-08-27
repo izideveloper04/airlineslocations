@@ -50,8 +50,8 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
 ---
 
 <BaseLayout
-  title="Find Airlines and Their Locations Worldwide | Airlines Locations"
-  description="Search airlines and find their offices, contact details, and locations in one directory."
+  title="AirlinesLocations - Airline Office Essential & Local Information"
+  description="Looking for an airline office? Search airline locations worldwide for office addresses, contact details, services, and other useful information."
   fullBleed
 >
   <script type="application/ld+json" set:html={JSON.stringify(siteSchema)} is:inline />
@@ -61,15 +61,15 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
     <div class="hero-overlay"></div>
     <div class="container hero-content">
       <div class="hero-text">
-        <span class="hero-eyebrow">Explore the World</span>
-        <h1>Everything You Need to Know, All in One Place</h1>
+        <span class="hero-eyebrow">FIND. CONNECT. MOVE</span>
+        <h1>One Direction for Every Connection</h1>
         <p>
-          Discover useful information, guides, destinations, and resources to help you plan your next journey.
+          Explore airline offices, contact points, and passenger services across a growing network of destinations.
         </p>
       </div>
 
       <div class="hero-search-card">
-        <h2>Search Airlines</h2>
+        <h2>Locate Your Airline</h2>
         <form class="search-form" action="/airlines" method="get">
           <label for="hero-search-input" class="visually-hidden">Search airlines by name</label>
           <div class="search-form__field">
@@ -77,7 +77,7 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" stroke-linecap="round" />
             </svg>
-            <input id="hero-search-input" name="q" type="text" placeholder="Search airlines by name…" autocomplete="off" />
+            <input id="hero-search-input" name="q" type="text" placeholder="Enter airline, city…" autocomplete="off" />
           </div>
           <button type="submit">Search</button>
         </form>
@@ -96,12 +96,12 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
             <path d="m9 12 2 2 4-4" />
           </svg>
           <div class="usp-card-title">
-            <h3>Reliable Information</h3>
+            <h3>Verified Airline Information</h3>
             <span class="usp-arrow" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </span>
           </div>
-          <p>Get accurate and useful information presented in a simple and easy-to-understand way.</p>
+          <p>Useful airline details organized with accuracy, clarity, and the passenger in mind.</p>
         </div>
         <div class="usp-card">
           <svg class="usp-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -109,12 +109,12 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
             <path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9Z" />
           </svg>
           <div class="usp-card-title">
-            <h3>Worldwide Coverage</h3>
+            <h3>Global Office Directory</h3>
             <span class="usp-arrow" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </span>
           </div>
-          <p>Explore destinations and resources from locations around the world.</p>
+          <p>Explore airline offices and details across a broad network of international destinations.</p>
         </div>
         <div class="usp-card">
           <svg class="usp-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -122,12 +122,12 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
             <path d="m20 20-3.5-3.5" stroke-linecap="round" />
           </svg>
           <div class="usp-card-title">
-            <h3>Easy to Explore</h3>
+            <h3>Built for Quick Searches</h3>
             <span class="usp-arrow" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </span>
           </div>
-          <p>Quickly find the information you need with our clean and user-friendly website.</p>
+          <p>Find the details you came for without wading through unnecessary information.</p>
         </div>
       </div>
     </div>
@@ -137,9 +137,9 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
   <section class="latest-pages-section">
     <div class="container">
       <div class="section-heading">
-        <span class="section-eyebrow">Discover More</span>
-        <h2>Latest Pages</h2>
-        <p>Explore our latest pages and discover helpful information and resources.</p>
+        <span class="section-eyebrow">AROUND THE NETWORK</span>
+        <h2>Office Listings Across Destinations</h2>
+        <p>Explore airline offices spanning major destinations and international cities.</p>
       </div>
       {latestChildPages.length > 0 ? (
         <div class="pages-grid">
@@ -175,17 +175,12 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
           />
         </div>
         <div class="about-content">
-          <span class="section-eyebrow">About Us</span>
-          <h2>Helping You Explore With Confidence</h2>
+          <span class="section-eyebrow">ABOUT AIRLINESLOCATIONS</span>
+          <h2>Making Every Airline Easier to Locate</h2>
           <p>
-            We are dedicated to providing useful, accessible, and easy-to-understand information for travelers around
-            the world.
+            Flights may take you from one place to another, but the information you need more often than not begins on the ground. We catalog airline offices, locations, contact information, and useful service details to help you find the right airline in the right place.
           </p>
-          <p>
-            Our goal is to bring important travel information together in one convenient place, helping you make
-            better decisions before and during your journey.
-          </p>
-          <a href="#" class="btn btn-primary">Learn About Us</a>
+          <a href="#" class="btn btn-primary">Explore More</a>
         </div>
       </div>
     </div>
@@ -195,9 +190,9 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
   <section class="latest-blog-section">
     <div class="container">
       <div class="section-heading">
-        <span class="section-eyebrow">From Our Blog</span>
-        <h2>Latest Blog Posts</h2>
-        <p>Read our latest articles, guides, tips, and travel stories.</p>
+        <span class="section-eyebrow">FROM THE JOURNAL</span>
+        <h2>Insights Beyond Itineraries</h2>
+        <p>Useful reads on air travel and aviation information</p>
       </div>
       {newsItems.length > 0 ? (
         <div class="blog-grid">
