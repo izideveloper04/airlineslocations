@@ -8,7 +8,7 @@ import logo from "../assets/images/logo/logo-AirlinesLocations.png";
 ---
 
 <header class="border-b border-[var(--line)] sticky top-0 z-40 bg-white">
-  <div class="container h-16 flex items-center justify-between gap-8">
+  <div class="container h-16 flex items-center justify-between gap-4">
     <a href="/" class="shrink-0">
       <Image
         src={logo}
@@ -22,13 +22,11 @@ import logo from "../assets/images/logo/logo-AirlinesLocations.png";
       />
     </a>
 
-    <div class="flex items-center gap-6 min-w-0">
-      <!-- overflow-x only below lg: an "auto" (or any non-visible) value on
-           either axis forces BOTH axes into a clipped scrollport per the CSS
-           overflow spec, which was silently clipping submenu dropdowns
-           below. Scoping it to narrow screens avoids that on desktop, where
-           hover dropdowns actually apply and all 8 items already fit anyway. -->
-      <nav aria-label="Primary" class="min-w-0 max-lg:overflow-x-auto lg:overflow-visible">
+    <!-- Desktop nav + search: hover dropdowns only make sense with a mouse,
+         so this whole cluster is lg+ only. Below lg, the hamburger panel
+         further down takes over. -->
+    <div class="hidden lg:flex items-center gap-6 min-w-0">
+      <nav aria-label="Primary" class="min-w-0">
         <ul class="flex items-center gap-6 text-sm font-medium text-ink whitespace-nowrap">
           {navItems.map((item) => (
             <li class:list={["relative", (item.submenu?.length ?? 0) > 0 && "group"]}>
@@ -73,9 +71,8 @@ import logo from "../assets/images/logo/logo-AirlinesLocations.png";
       </nav>
 
       <!-- Same airline-name search as the homepage hero and /airlines, just
-           compact enough to live in the navbar - hidden below lg where the
-           nav itself already needs the full row to scroll horizontally. -->
-      <form action="/airlines" method="get" class="hidden lg:flex items-center gap-1 h-9 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] pl-3 pr-1">
+           compact enough to live in the navbar. -->
+      <form action="/airlines" method="get" class="flex items-center gap-1 h-9 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface)] pl-3 pr-1">
         <label for="nav-search-input" class="visually-hidden">Search airlines by name</label>
         <input
           id="nav-search-input"
@@ -97,5 +94,116 @@ import logo from "../assets/images/logo/logo-AirlinesLocations.png";
         </button>
       </form>
     </div>
+
+    <!-- Hamburger toggle: mobile/tablet only. -->
+    <button
+      id="mobile-menu-toggle"
+      type="button"
+      class="lg:hidden inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink hover:bg-[var(--surface)]"
+      aria-controls="mobile-menu"
+      aria-expanded="false"
+      aria-label="Toggle menu"
+    >
+      <svg id="mobile-menu-icon-open" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+        <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+      </svg>
+      <svg id="mobile-menu-icon-close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden h-6 w-6">
+        <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile/tablet menu panel -->
+  <div id="mobile-menu" class="hidden lg:hidden border-t border-[var(--line)] bg-white">
+    <div class="container py-4">
+      <nav aria-label="Primary mobile">
+        <ul class="flex flex-col divide-y divide-[var(--line)] text-sm font-medium text-ink">
+          <li>
+            <a href="/" class="block py-3 hover:text-brand">Home</a>
+          </li>
+          {navItems.map((item) => (
+            <li>
+              {item.submenu && item.submenu.length > 0 ? (
+                <details class="group/mobile">
+                  <summary class="flex cursor-pointer list-none items-center justify-between py-3 hover:text-brand">
+                    {item.href && item.href !== "javascript:void(0)" ? (
+                      <a href={item.href} class="hover:text-brand">{item.label}</a>
+                    ) : (
+                      <span>{item.label}</span>
+                    )}
+                    <span aria-hidden="true" class="text-ink/40 transition-transform group-open/mobile:rotate-180">&#9662;</span>
+                  </summary>
+                  <ul class="pb-2 pl-4">
+                    {item.submenu.map((entry) => (
+                      <li>
+                        <a href={entry.href} class="block py-2 text-ink/70 hover:text-brand">
+                          {entry.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : item.href && item.href !== "javascript:void(0)" ? (
+                <a href={item.href} class="block py-3 hover:text-brand">{item.label}</a>
+              ) : (
+                <span class="block py-3 text-ink/40 cursor-default">{item.label}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <form action="/airlines" method="get" class="mt-4 flex items-center gap-1 h-10 rounded-full border border-[var(--line)] bg-[var(--surface)] pl-3 pr-1">
+        <label for="nav-search-input-mobile" class="visually-hidden">Search airlines by name</label>
+        <input
+          id="nav-search-input-mobile"
+          name="q"
+          type="text"
+          placeholder="Search airlines…"
+          autocomplete="off"
+          class="w-full bg-transparent text-sm text-ink placeholder:text-ink/40 outline-none"
+        />
+        <button
+          type="submit"
+          aria-label="Search"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:bg-brand-dark"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </form>
+    </div>
   </div>
 </header>
+
+<script>
+  const toggle = document.getElementById("mobile-menu-toggle");
+  const menu = document.getElementById("mobile-menu");
+  const iconOpen = document.getElementById("mobile-menu-icon-open");
+  const iconClose = document.getElementById("mobile-menu-icon-close");
+
+  function setMenuOpen(open: boolean) {
+    if (!toggle || !menu || !iconOpen || !iconClose) return;
+    menu.classList.toggle("hidden", !open);
+    iconOpen.classList.toggle("hidden", open);
+    iconClose.classList.toggle("hidden", !open);
+    toggle.setAttribute("aria-expanded", String(open));
+  }
+
+  toggle?.addEventListener("click", () => {
+    setMenuOpen(menu?.classList.contains("hidden") ?? false);
+  });
+
+  // Close the panel after following a link, and reset it if the viewport
+  // grows past the lg breakpoint where the desktop nav takes over instead.
+  menu?.addEventListener("click", (event) => {
+    if ((event.target as HTMLElement).closest("a")) setMenuOpen(false);
+  });
+
+  const lgQuery = window.matchMedia("(min-width: 1024px)");
+  lgQuery.addEventListener("change", (event) => {
+    if (event.matches) setMenuOpen(false);
+  });
+</script>
