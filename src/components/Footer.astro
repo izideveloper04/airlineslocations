@@ -11,10 +11,10 @@ const footerLinks = navItems.filter((item) => item.href && item.href !== "javasc
 ---
 
 <footer class="mt-auto border-t border-[var(--line)] bg-[var(--surface)]">
-  <div class="container py-10 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
+  <div class="container py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
     <div>
       <a href="/" class="inline-block">
-        <Image src={logo} alt="Airlines Locations" width={159} height={28} densities={[1, 2]} class="h-6 w-auto" />
+        <Image src={logo} alt="Airlines Locations" width={220} height={39} densities={[1, 2]} class="h-10 w-auto" />
       </a>
       <p class="text-ink/60 mt-3 max-w-xs leading-relaxed">
         A directory of airline offices, contact details, and locations worldwide.
@@ -32,12 +32,28 @@ const footerLinks = navItems.filter((item) => item.href && item.href !== "javasc
     </div>
 
     <div>
-      <h2 class="text-xs font-bold uppercase tracking-wide text-ink/50 mb-3">Disclaimer</h2>
-      <p class="text-ink/60 leading-relaxed">
-        The information provided on Airlines Locations is for general informational purposes only. We are an independent website and have no official affiliation with any airline, airport, or aviation authority. While we intend to keep our content accurate and up to date, passengers should confirm important details with the respective airline or the Federal Airports Authority of Nigeria (FAAN).
-      </p>
+      <h2 class="text-xs font-bold uppercase tracking-wide text-ink/50 mb-3">Top Pages</h2>
+      <ul class="space-y-1.5">
+        <li><a href="/caspian-airlines/caspian-airlines-abadan-iran" class="text-ink/70 hover:text-brand">Caspian Airlines Abadan Iran</a></li>
+        <li><a href="/caspian-airlines/caspian-airlines-ahvaz-iran" class="text-ink/70 hover:text-brand">Caspian Airlines Ahvaz Iran</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="text-xs font-bold uppercase tracking-wide text-ink/50 mb-3">Popular Pages</h2>
+      <ul class="space-y-1.5">
+        <li><a href="/caspian-airlines/caspian-airlines-mashhad-iran" class="text-ink/70 hover:text-brand">Caspian Airlines Mashhad Iran</a></li>
+        <li><a href="/caspian-airlines/caspian-airlines-tehran-iran" class="text-ink/70 hover:text-brand">Caspian Airlines Tehran Iran</a></li>
+      </ul>
     </div>
   </div>
+
+  <div class="border-t border-[var(--line)]">
+    <div class="container py-6 text-xs text-ink/60 leading-relaxed">
+      <span class="font-semibold text-ink/70">Disclaimer:</span> The information provided on Airlines Locations is for general informational purposes only. We are an independent website and have no official affiliation with any airline, airport, or aviation authority. While we intend to keep our content accurate and up to date, passengers should confirm important details with the respective airline or the Federal Airports Authority of Nigeria (FAAN).
+    </div>
+  </div>
+
   <div class="border-t border-[var(--line)]">
     <div class="container py-4 text-center text-xs text-ink/50">
       &copy; {year} Airlines Locations. All rights reserved.
