@@ -1,3 +1,4 @@
+import he from "he";
 // All WordPress-fetching logic lives here. No ad-hoc fetch() calls to the
 // WP REST API anywhere else in the project (components/pages import from
 // this module only).
@@ -215,7 +216,7 @@ async function buildPageTree(): Promise<PageTree> {
       id: p.id,
       slug: p.slug,
       parent: p.parent,
-      title: p.title.rendered,
+      title: he.decode(p.title.rendered),
       content: p.content.rendered,
       template: p.wp_template ?? "",
       menuOrder: p.menu_order ?? 0,
@@ -266,7 +267,7 @@ async function buildPosts(): Promise<WPPost[]> {
     .map((p) => ({
       id: p.id,
       slug: p.slug,
-      title: p.title.rendered,
+      title: he.decode(p.title.rendered),
       excerpt: p.excerpt.rendered,
       content: p.content.rendered,
       date: p.date,
@@ -415,30 +416,35 @@ export interface ResolvedPageMeta {
 }
 
 /**
- * Single source of truth for the Yoast-fields-with-fallback rule (IMPLEMENTATION.md ยง8).
+ * Single source of truth for the Yoast-fields-with-fallback rule (IMPLEMENTATION.md §8).
  * Called from BaseLayout and any static page that also needs SEO fallback.
  * Takes the narrow shape it actually needs (not WPPage specifically) so it
  * also works for WPPost — both carry title/yoast, nothing else here matters.
+ *
+ * Yoast's title/description/og_title/og_description come back HTML-entity
+ * encoded (same as title.rendered elsewhere in this file) but are consumed
+ * in plain-text contexts (<title>, <meta content>), so they're decoded here
+ * too. page.title is already decoded upstream in buildPageTree/buildPosts.
  */
 export function resolvePageMeta(page: { title: string; yoast: YoastHead | null }, site: SiteSettings): ResolvedPageMeta {
   const yoast = page.yoast;
 
   const title =
     yoast?.title && yoast.title.trim().length > 0
-      ? yoast.title
+      ? he.decode(yoast.title)
       : `${page.title} - ${site.title}`;
 
   const description =
     yoast?.description && yoast.description.trim().length > 0
-      ? yoast.description
+      ? he.decode(yoast.description)
       : undefined;
 
   return {
     title,
     description,
     canonical: yoast?.canonical,
-    ogTitle: yoast?.og_title,
-    ogDescription: yoast?.og_description,
+    ogTitle: yoast?.og_title ? he.decode(yoast.og_title) : undefined,
+    ogDescription: yoast?.og_description ? he.decode(yoast.og_description) : undefined,
     ogImage: yoast?.og_image?.[0]?.url,
     schema: yoast?.schema,
   };
