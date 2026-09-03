@@ -50,20 +50,6 @@ const SHOW_FILTER_THRESHOLD = 9;
     </div>
   </div>
 
-  {children.length >= SHOW_FILTER_THRESHOLD && (
-    <div class="mb-6 max-w-sm">
-      <label for="dir-filter-input" class="visually-hidden">Filter this section</label>
-      <input
-        id="dir-filter-input"
-        type="text"
-        placeholder="Filter this section…"
-        autocomplete="off"
-        data-dir-filter
-        class="w-full px-3 py-2 border border-[var(--line)] rounded-md text-sm"
-      />
-    </div>
-  )}
-
   <RelatedPages pages={children} />
 
   {children.length >= SHOW_FILTER_THRESHOLD && (
