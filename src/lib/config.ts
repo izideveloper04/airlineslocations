@@ -8,6 +8,6 @@ export const isStaging = (process.env.STAGING ?? "true").toLowerCase() !== "fals
 // ChildPageLayout.astro). No real support line has been confirmed yet -
 // swap in the real number and a matching tel: link here once one exists.
 export const supportPhone = {
-  display: "+1-XXX-XXX-XXXX",
-  href: "#",
+  display: "+1-855-845-4172",
+  href: "tel:+1-855-845-4172",
 };
