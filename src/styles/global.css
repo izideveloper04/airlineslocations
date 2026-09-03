@@ -301,7 +301,9 @@
     padding: 24px 28px;
     box-shadow: var(--shadow-float);
     text-align: center;
-  }
+    margin: 0 auto;
+    border: solid 1px var(--brand-tint);
+}
   .call-card  .call-card__heading {
     font-size: 1.1rem;
     font-weight: 700;
