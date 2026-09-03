@@ -54,6 +54,10 @@ export interface WPPage {
   featuredImage: string | null;
   /** Computed by walking the parent chain, e.g. "flights/departures". */
   fullPath: string;
+  /** WP's own per-page Discussion setting ("Allow comments") — the comment
+   *  form is hidden entirely when this is false, independent of whether any
+   *  approved comments already exist. */
+  commentsOpen: boolean;
 }
 
 export interface SiteSettings {
@@ -76,6 +80,7 @@ interface RawWPPage {
   menu_order?: number;
   date: string;
   yoast_head_json?: YoastHead;
+  comment_status?: "open" | "closed";
   _embedded?: {
     "wp:featuredmedia"?: { source_url: string }[];
   };
@@ -138,7 +143,7 @@ async function fetchAllPages(): Promise<RawWPPage[]> {
 
   do {
     const res = await fetch(
-      apiUrl(`/pages?per_page=${perPage}&page=${page}&_embed=wp:featuredmedia&_fields=id,slug,parent,title,content,wp_template,menu_order,date,yoast_head_json,_links,_embedded`),
+      apiUrl(`/pages?per_page=${perPage}&page=${page}&_embed=wp:featuredmedia&_fields=id,slug,parent,title,content,wp_template,menu_order,date,yoast_head_json,comment_status,_links,_embedded`),
       { headers: NO_CACHE_REQUEST_HEADERS },
     );
     if (!res.ok) {
@@ -224,6 +229,7 @@ async function buildPageTree(): Promise<PageTree> {
       yoast: p.yoast_head_json ?? null,
       featuredImage: p._embedded?.["wp:featuredmedia"]?.[0]?.source_url ?? null,
       fullPath,
+      commentsOpen: p.comment_status === "open",
     };
 
     byId.set(page.id, page);
@@ -306,6 +312,126 @@ export async function getPostBySlug(slug: string): Promise<WPPost | undefined> {
   const posts = await getPosts();
   const needle = slug.toLowerCase();
   return posts.find((p) => p.slug.toLowerCase() === needle);
+}
+
+/** A single approved, publicly-visible comment on a page. */
+export interface WPComment {
+  id: number;
+  authorName: string;
+  /**
+   * Already run through WP's own `comment_text` filter (wpautop + linkify)
+   * and, before that, sanitized at submission time against a fixed
+   * inline-tag allowlist (`wp_kses` on WP's `pre_comment_content` filter) —
+   * safe to render raw. Same "trusted HTML" call as page content
+   * (IMPLEMENTATION.md §7), but the trust here comes from WP's fixed
+   * comment-tag allowlist rather than from the author being an editor.
+   */
+  content: string;
+  date: string;
+}
+
+interface RawWPComment {
+  id: number;
+  author_name: string;
+  content: { rendered: string };
+  date: string;
+}
+
+const COMMENTS_CACHE_TTL_MS = 60_000;
+const commentsCache = new Map<number, { comments: WPComment[]; expires: number }>();
+
+/**
+ * Approved comments for a page, oldest first. WP's REST API only lets an
+ * unauthenticated request (which is all this app ever sends — see the
+ * module note at the top of this file) see `status=approve` comments,
+ * regardless of what's asked for; anything else 401s. So "fetch as
+ * ourselves, no auth header" already *is* the enforcement of "only show what
+ * an editor approved in the WP dashboard" — nothing extra to filter here.
+ *
+ * Cached briefly per page so a busy page doesn't hit WP on every render;
+ * unlike page content, a new/approved comment showing up a few seconds late
+ * isn't worth wiring the revalidate webhook for.
+ */
+export async function getApprovedComments(postId: number): Promise<WPComment[]> {
+  const now = Date.now();
+  const cached = commentsCache.get(postId);
+  if (cached && cached.expires > now) return cached.comments;
+
+  const res = await fetch(
+    apiUrl(`/comments?post=${postId}&order=asc&orderby=date&per_page=100&_fields=id,author_name,content,date`),
+    { headers: NO_CACHE_REQUEST_HEADERS },
+  );
+  if (!res.ok) {
+    throw new Error(`WP comments fetch failed: ${res.status} ${res.statusText}`);
+  }
+
+  const raw: RawWPComment[] = await res.json();
+  const comments: WPComment[] = raw.map((c) => ({
+    id: c.id,
+    authorName: he.decode(c.author_name),
+    content: c.content.rendered,
+    date: c.date,
+  }));
+
+  commentsCache.set(postId, { comments, expires: now + COMMENTS_CACHE_TTL_MS });
+  return comments;
+}
+
+export interface CommentSubmission {
+  postId: number;
+  authorName: string;
+  authorEmail: string;
+  content: string;
+}
+
+export type SubmitCommentResult =
+  | { status: "ok" }
+  | { status: "error"; message: string; httpStatus: number };
+
+/**
+ * Submits a visitor's comment to WordPress. Lands in whatever moderation
+ * state WP itself assigns an anonymous, unauthenticated commenter — normally
+ * pending review, unless WP's own auto-approve rules (e.g. a previously
+ * approved email on this site) apply — approval always happens in the WP
+ * dashboard, never here. The created comment's moderation status isn't
+ * readable back from this call (WP only exposes it in "edit" context, which
+ * an anonymous submitter doesn't have), so success here just means WP
+ * accepted the submission, not that it's already visible.
+ *
+ * Only called from src/pages/api/comments.ts, which is where visitor input
+ * is validated before it ever reaches this function.
+ */
+export async function submitComment(input: CommentSubmission): Promise<SubmitCommentResult> {
+  let res: Response;
+  try {
+    res = await fetch(`${WP_API_URL}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...NO_CACHE_REQUEST_HEADERS },
+      body: JSON.stringify({
+        post: input.postId,
+        author_name: input.authorName,
+        author_email: input.authorEmail,
+        content: input.content,
+      }),
+    });
+  } catch {
+    return { status: "error", message: "Network error contacting WordPress", httpStatus: 502 };
+  }
+
+  if (res.ok) return { status: "ok" };
+
+  // Passed straight through rather than collapsed to a generic 502: WP's
+  // rejection here is a genuine, meaningful response (e.g. 401 "you must be
+  // logged in to comment" when Settings > Discussion requires registration,
+  // or 400 on a missing/invalid field) — a "Bad Gateway" status code on a
+  // response that says exactly what's wrong just muddies devtools/logs, and
+  // this app's own request to WP itself succeeded fine.
+  const body = await res.json().catch(() => null);
+  return {
+    status: "error",
+    message: body?.message ?? `WordPress rejected the comment (${res.status})`,
+    httpStatus: res.status,
+  };
 }
 
 export async function getPageByPath(path: string): Promise<WPPage | undefined> {

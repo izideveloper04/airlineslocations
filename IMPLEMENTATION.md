@@ -112,9 +112,10 @@ wordpress/
 
 ## 7. Content rendering safety
 
-- WP's `content.rendered` HTML is inserted via Astro's raw-HTML mechanism (`set:html`). Trust boundary: content comes only from authenticated WP editors, not public user input — acceptable to render as-is. Revisit if WP ever adds public comments/user-submitted content rendered through the same field.
+- WP's `content.rendered` HTML is inserted via Astro's raw-HTML mechanism (`set:html`). Trust boundary: content comes only from authenticated WP editors, not public user input — acceptable to render as-is.
 - The rendered content block is scoped under a `.prose` class (`src/styles/global.css`) with typography defaults for headings, paragraphs, lists, links, images, blockquotes, and tables, since WP's block editor output assumes WP core CSS, which isn't loaded here.
 - WP media images render as plain `<img>` tags with the original WP URL (no `astro:assets` proxy/optimization — avoids extra build-time image processing against an external host, which matters more once the page tree is large). The WP media host is still allow-listed in `astro.config.mjs`'s `image.domains` in case a specific page later opts into `astro:assets`.
+- **Revisited**: WP now does carry public, user-submitted content through a `set:html`-rendered field — comments (`WPComment.content`, `src/components/CommentSection.astro`). Trust boundary there is different from page content: it's not "authenticated editor only", it's "sanitized by WP's own fixed inline-tag allowlist" (`wp_kses` on WP's `pre_comment_content` filter, applied before storage) plus "only ever fetched unauthenticated", which forces WP's REST API to filter to `status=approve` regardless of what's requested — so nothing reaches the frontend that hasn't both passed WP's tag allowlist and been approved in the WP dashboard. See `getApprovedComments()`/`submitComment()` in `src/lib/wp.ts`.
 
 ## 8. Yoast SEO integration
 

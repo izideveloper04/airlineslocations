@@ -37,6 +37,28 @@ add_action( 'rest_api_init', function () {
 } );
 
 /**
+ * Lets visitors post a comment via the REST API without being logged in
+ * (src/components/CommentSection.astro → src/pages/api/comments.ts →
+ * submitComment() in src/lib/wp.ts). WP_REST_Comments_Controller blocks
+ * this by default, independently of and in addition to the
+ * "Users must be registered and logged in to comment" Discussion setting —
+ * that setting only governs the classic wp-comments-post.php form, a
+ * separate code path. Without this filter, create_item_permissions_check()
+ * always falls through to `apply_filters( 'rest_allow_anonymous_comments', false, ... )`
+ * and rejects every anonymous submission with "Sorry, you must be logged in
+ * to comment.", no matter what the Discussion setting or the underlying
+ * `comment_registration` option are set to.
+ *
+ * Per-page moderation is untouched by this: each page's own "Allow
+ * comments" (Discussion panel / comment_status) still gates whether the
+ * form appears/works at all, and every comment created this way still
+ * lands in WordPress's normal moderation queue (or wherever
+ * wp_allow_comment()'s own spam/flood/auto-approve rules put it) — this
+ * filter only removes the REST-specific "must be logged in" blanket block.
+ */
+add_filter( 'rest_allow_anonymous_comments', '__return_true' );
+
+/**
  * Push-based cache invalidation for the Astro frontend (see
  * src/lib/wp.ts's purgeCache() and src/pages/api/revalidate.ts). Publishing
  * a page now shows up on the live site within seconds instead of waiting

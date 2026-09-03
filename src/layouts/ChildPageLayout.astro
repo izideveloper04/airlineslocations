@@ -3,8 +3,9 @@ import BaseLayout from "./BaseLayout.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
 import PageSidebar from "../components/PageSidebar.astro";
 import FeaturedImage from "../components/FeaturedImage.astro";
+import CommentSection from "../components/CommentSection.astro";
 import type { WPPage, PageTree, ResolvedPageMeta } from "../lib/wp";
-import { getAncestorChain, getSiblings, isChildTemplate } from "../lib/wp";
+import { getAncestorChain, getSiblings, isChildTemplate, getApprovedComments } from "../lib/wp";
 import { supportPhone } from "../lib/config";
 
 interface Props {
@@ -19,6 +20,7 @@ const siblings = (await getSiblings(page.id))
   .filter((sibling) => isChildTemplate(sibling.template))
   .sort((a, b) => b.date.localeCompare(a.date))
   .slice(0, 12);
+const comments = await getApprovedComments(page.id);
 
 const breadcrumbItems = [
   ...ancestors.map((ancestor) => ({ label: ancestor.title, href: `/${ancestor.fullPath}` })),
@@ -43,6 +45,7 @@ const breadcrumbItems = [
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
     <article class="md:col-span-2">
       <div class="prose" set:html={page.content} />
+      <CommentSection pageId={page.id} commentsOpen={page.commentsOpen} comments={comments} />
     </article>
 
     <aside class="page-aside">

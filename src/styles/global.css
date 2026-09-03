@@ -563,6 +563,126 @@
     padding: 0.5em 0.75em;
     text-align: left;
   }
+
+  /* Public comment thread + submission form on child pages — see
+     src/components/CommentSection.astro. Comments are sourced from and
+     moderated entirely in the WordPress dashboard (src/lib/wp.ts's
+     getApprovedComments/submitComment); nothing here controls approval. */
+  .comments {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+  .comments__heading {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  .comments__empty {
+    color: #667085;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+  .comments__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .comment {
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border-radius: var(--radius-card);
+  }
+  .comment__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+  .comment__author {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .comment__date {
+    color: #667085;
+    font-size: 0.8rem;
+  }
+  .comment__body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .comment__body p {
+    margin: 0.5em 0;
+  }
+  .comment__body a {
+    color: var(--brand);
+  }
+  .comment-form {
+    max-width: 42rem;
+  }
+  .comment-form h3 {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+  .comment-form__row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
+  .comment-form__row label {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .comment-form__row input,
+  .comment-form__row textarea {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    padding: 0.6rem 0.75rem;
+    font: inherit;
+  }
+  .comment-form__row textarea {
+    resize: vertical;
+  }
+  /* Honeypot: present in the DOM (so bots that read markup fill it) but
+     invisible and unreachable by keyboard/AT for real visitors. */
+  .comment-form__hp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .comment-form button[type="submit"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 24px;
+    border-radius: var(--radius-control);
+    background: var(--brand);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .comment-form button[type="submit"]:hover {
+    background: var(--brand-dark);
+  }
+  .comment-form button[type="submit"]:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .comment-form__status {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+  }
+  .comment-form__status--ok {
+    color: #16794e;
+  }
+  .comment-form__status--error {
+    color: #c0342c;
+  }
 }
 
 

@@ -1,0 +1,118 @@
+---
+import type { WPComment } from "../lib/wp";
+
+interface Props {
+  pageId: number;
+  commentsOpen: boolean;
+  comments: WPComment[];
+}
+
+const { pageId, commentsOpen, comments } = Astro.props;
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric" });
+---
+
+<section class="comments" id="comments">
+  <h2 class="comments__heading">Comments{comments.length > 0 && ` (${comments.length})`}</h2>
+
+  {comments.length === 0 && <p class="comments__empty">No comments yet.</p>}
+
+  {comments.length > 0 && (
+    <ul class="comments__list">
+      {comments.map((comment) => (
+        <li class="comment">
+          <div class="comment__meta">
+            <span class="comment__author">{comment.authorName}</span>
+            <span class="comment__date">{dateFormatter.format(new Date(comment.date))}</span>
+          </div>
+          <div class="comment__body" set:html={comment.content} />
+        </li>
+      ))}
+    </ul>
+  )}
+
+  {commentsOpen && (
+    <form class="comment-form" data-comment-form data-post-id={pageId}>
+      <h3>Leave a comment</h3>
+
+      <div class="comment-form__row">
+        <label for="comment-author-name">Name</label>
+        <input id="comment-author-name" name="authorName" type="text" required maxlength="100" autocomplete="name" />
+      </div>
+
+      <div class="comment-form__row">
+        <label for="comment-author-email">Email (not published)</label>
+        <input id="comment-author-email" name="authorEmail" type="email" required autocomplete="email" />
+      </div>
+
+      <div class="comment-form__row">
+        <label for="comment-content">Comment</label>
+        <textarea id="comment-content" name="content" required maxlength="3000" rows="4"></textarea>
+      </div>
+
+      <div class="comment-form__hp">
+        <label for="comment-website">Website</label>
+        <input id="comment-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <button type="submit">Post Comment</button>
+      <p class="comment-form__status" data-comment-status role="status" aria-live="polite"></p>
+    </form>
+  )}
+</section>
+
+<script>
+  // Vanilla client script, no framework hydration — same convention as the
+  // rest of the site (see IMPLEMENTATION.md §6). Submits to
+  // src/pages/api/comments.ts, which validates and forwards to WordPress
+  // (src/lib/wp.ts's submitComment) — never fetched directly from here.
+  document.querySelectorAll<HTMLFormElement>("[data-comment-form]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const statusEl = form.querySelector<HTMLElement>("[data-comment-status]");
+      const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const postId = Number(form.dataset.postId);
+      const formData = new FormData(form);
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Posting…";
+        statusEl.className = "comment-form__status";
+      }
+
+      try {
+        const res = await fetch("/api/comments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            postId,
+            authorName: formData.get("authorName"),
+            authorEmail: formData.get("authorEmail"),
+            content: formData.get("content"),
+            website: formData.get("website"),
+          }),
+        });
+        const body = await res.json();
+
+        if (res.ok && body.status !== "error") {
+          form.reset();
+          if (statusEl) {
+            statusEl.textContent = "Thanks! Your comment has been submitted and will appear once approved.";
+            statusEl.className = "comment-form__status comment-form__status--ok";
+          }
+        } else if (statusEl) {
+          statusEl.textContent = body.message ?? "Something went wrong. Please try again.";
+          statusEl.className = "comment-form__status comment-form__status--error";
+        }
+      } catch {
+        if (statusEl) {
+          statusEl.textContent = "Network error. Please try again.";
+          statusEl.className = "comment-form__status comment-form__status--error";
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  });
+</script>
