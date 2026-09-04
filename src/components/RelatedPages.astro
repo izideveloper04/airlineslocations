@@ -15,7 +15,7 @@ const { pages } = Astro.props;
     {pages.map((page) => (
       <a href={`/${page.fullPath}`} class="card" data-title={page.title.toLowerCase()}>
         <div class="card__media">
-          <FeaturedImage src={page.featuredImage} />
+          <FeaturedImage src={page.featuredImage} alt={page.title} />
         </div>
         <div class="card__body">
           <p class="card__title">{page.title}</p>

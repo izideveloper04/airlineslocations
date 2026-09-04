@@ -149,7 +149,7 @@ const postDateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }
             <article class="page-card">
               <a href={`/${page.fullPath}`}>
                 <div class="page-card-image">
-                  <FeaturedImage src={page.featuredImage} />
+                  <FeaturedImage src={page.featuredImage} alt={page.title} />
                 </div>
                 <div class="page-card-content">
                   <h3>{page.title}</h3>
