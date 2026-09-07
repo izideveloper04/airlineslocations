@@ -141,6 +141,13 @@
     box-shadow: var(--shadow-card);
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   }
+  /* `.card { display: block }` above is an author rule and always beats the
+     browser's built-in `[hidden] { display: none }` UA rule regardless of
+     specificity, so the directory filter script's `card.hidden = true`
+     silently did nothing without this override. */
+  .card[hidden] {
+    display: none;
+  }
   a.card:hover,
   article.card:hover {
     transform: translateY(-3px);
