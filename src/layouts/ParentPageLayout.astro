@@ -40,7 +40,7 @@ const SHOW_FILTER_THRESHOLD = 9;
        a card grid below, with no sidebar. -->
   <div class="page-hero">
     <div class="page-hero__main">
-      <Breadcrumbs items={breadcrumbItems} />
+      <Breadcrumbs items={breadcrumbItems} skipSchema />
       <h1 class="page-hero__title">{page.title}</h1>
       {children.length > 0 && (
         <p class="text-sm text-ink/60 mt-2">
@@ -50,6 +50,19 @@ const SHOW_FILTER_THRESHOLD = 9;
     </div>
   </div>
 
+  {children.length >= SHOW_FILTER_THRESHOLD && (
+    <div class="search-form mb-6">
+      <div class="search-form__field">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+        </svg>
+        <label for="dir-filter-input" class="visually-hidden">Filter {page.title} locations</label>
+        <input id="dir-filter-input" type="text" data-dir-filter placeholder={`Filter ${children.length} locations…`} autocomplete="off" />
+      </div>
+    </div>
+  )}
+
   <RelatedPages pages={children} />
 
   {children.length >= SHOW_FILTER_THRESHOLD && (
@@ -57,16 +70,35 @@ const SHOW_FILTER_THRESHOLD = 9;
       // Plain substring filter over the already-rendered card grid - the
       // full child list is already on the page (no separate fetch), so
       // hiding/showing existing .card elements is enough.
-      const input = document.querySelector<HTMLInputElement>("[data-dir-filter]");
-      const cards = document.querySelectorAll<HTMLElement>(".card[data-title]");
+      //
+      // Deliberately narrowed with `instanceof`, not a
+      // `document.querySelector<T>(...)` generic-call or an `as` cast —
+      // confirmed via the dev server that a <script> nested inside a
+      // conditional template expression (this one's wrapped in
+      // `{children.length >= SHOW_FILTER_THRESHOLD && (...)}`) is emitted
+      // completely raw, unlike an unconditional component-level <script>
+      // (e.g. Header.astro's), which Astro hoists into its own module and
+      // strips TypeScript from before the browser ever sees it. This one
+      // previously used `document.querySelector<HTMLInputElement>(...)`,
+      // which the browser parsed as a (syntactically valid, semantically
+      // wrong) chained comparison instead of a generic call, throwing
+      // "input.addEventListener is not a function" at runtime — an `as`
+      // cast is equally TS-only and would fail the same way. `instanceof`
+      // is plain JS at runtime *and* narrows the type for `astro check`,
+      // so it's the one form that satisfies both.
+      const input = document.querySelector("[data-dir-filter]");
+      const cards = document.querySelectorAll(".card[data-title]");
 
-      input?.addEventListener("input", () => {
-        const needle = input.value.trim().toLowerCase();
-        cards.forEach((card) => {
-          const title = card.dataset.title ?? "";
-          card.hidden = needle.length > 0 && !title.includes(needle);
+      if (input instanceof HTMLInputElement) {
+        input.addEventListener("input", () => {
+          const needle = input.value.trim().toLowerCase();
+          cards.forEach((card) => {
+            if (!(card instanceof HTMLElement)) return;
+            const title = card.dataset.title ?? "";
+            card.hidden = needle.length > 0 && !title.includes(needle);
+          });
         });
-      });
+      }
     </script>
   )}
 </BaseLayout>

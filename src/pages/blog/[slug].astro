@@ -35,7 +35,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
 >
   <div class="page-hero">
     <div class="page-hero__main">
-      <Breadcrumbs items={[{ label: "Blog", href: "/blog" }, { label: post.title }]} />
+      <Breadcrumbs items={[{ label: "Blog", href: "/blog" }, { label: post.title }]} skipSchema />
       <h1 class="page-hero__title">{post.title}</h1>
       <time datetime={post.date} class="block text-sm text-ink/60 mt-2">
         {dateFormatter.format(new Date(post.date))}
@@ -47,6 +47,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "long" });
     <FeaturedImage
       src={post.featuredImage}
       eager
+      width={896}
+      height={256}
       class="w-full h-64 object-cover rounded-md border border-[var(--line)] mb-6"
     />
     <div class="prose" set:html={post.content} />

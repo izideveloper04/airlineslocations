@@ -14,9 +14,19 @@ export interface Crumb {
 interface Props {
   /** The trail after Home - Home itself is prepended automatically below, so callers never include it. */
   items: Crumb[];
+  /** Pages that pass a WordPress/Yoast `schema` graph to BaseLayout already
+   *  ship their own BreadcrumbList JSON-LD there (correctly encoded, with
+   *  its own URL convention) — this component's copy was a second,
+   *  independently-generated BreadcrumbList competing with it (different
+   *  root label, non-trailing-slash URLs, and a raw WP-title encoding bug
+   *  in at least one sampled page). Pass true wherever a Yoast schema graph
+   *  is already present so only one BreadcrumbList ships per page; leave it
+   *  false on hand-built pages with no Yoast source (e.g. /airlines,
+   *  /blog index) where this is the only breadcrumb schema available. */
+  skipSchema?: boolean;
 }
 
-const { items: rest } = Astro.props;
+const { items: rest, skipSchema = false } = Astro.props;
 const items: Crumb[] = [{ label: "AirlinesLocations", href: "/" }, ...rest];
 
 const breadcrumbSchema = {
@@ -45,4 +55,4 @@ const breadcrumbSchema = {
     ))}
   </ol>
 </nav>
-<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />
+{!skipSchema && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />}

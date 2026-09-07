@@ -26,6 +26,33 @@ const alternateHost = canonicalHost
     : `www.${canonicalHost}`
   : undefined;
 
+// getPageByPath (src/lib/wp.ts) normalizes case/leading-and-trailing slashes
+// before looking a path up in the page tree, so "/EVA-AIR", "/eva-air/", and
+// "//eva-air" all successfully resolve to the same page instead of 404ing —
+// each was serving 200 with its own self-referencing canonical rather than
+// redirecting to the one true form, real duplicate-content surface once the
+// site is indexed. Redirect those variants to the canonical form here
+// instead. Skipped for build assets (/_astro/*, hashed filenames are
+// case-sensitive), /api/* (a 301 on a non-GET request breaks the body), and
+// /_image (its case-sensitive encoded source URL lives in the query string,
+// which this only reads past, never rewrites — see NORMALIZE_SKIP_EXACT).
+const NORMALIZE_SKIP_PREFIXES = ["/_astro/", "/api/"];
+const NORMALIZE_SKIP_EXACT = new Set(["/_image"]);
+
+function normalizedPathname(pathname: string): string | null {
+  if (NORMALIZE_SKIP_EXACT.has(pathname) || NORMALIZE_SKIP_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    return null;
+  }
+  // A dot in the last segment means a static file (favicon.ico,
+  // robots.txt, a stray asset) — leave filenames' casing alone.
+  const lastSegment = pathname.split("/").pop() ?? "";
+  if (lastSegment.includes(".")) return null;
+
+  const collapsed = pathname.replace(/\/{2,}/g, "/").toLowerCase();
+  const normalized = collapsed.length > 1 && collapsed.endsWith("/") ? collapsed.slice(0, -1) : collapsed;
+  return normalized === pathname ? null : normalized;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   if (alternateHost && siteUrl && context.url.hostname === alternateHost) {
     const target = new URL(context.url);
@@ -36,6 +63,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     // when the real visitor came in over https, so copying context.url's
     // protocol here would redirect everyone to http://www... instead.
     target.protocol = siteUrl.protocol;
+    return context.redirect(target.toString(), 301);
+  }
+
+  const normalized = normalizedPathname(context.url.pathname);
+  if (normalized) {
+    const target = new URL(context.url);
+    target.pathname = normalized;
     return context.redirect(target.toString(), 301);
   }
 

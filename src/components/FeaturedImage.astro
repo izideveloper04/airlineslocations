@@ -5,19 +5,38 @@
 // of a fallback photo - a real fallback image would cost an extra network
 // request on every single page/card that simply has no photo set, and there
 // are a lot of those across the directory.
+//
+// Routed through astro:assets' <Image>, not a plain <img> — CMS uploads
+// were being served at native WordPress size/format (JPEG, no srcset),
+// 2-3x heavier than their rendered size. <Image> resizes + re-encodes to
+// WebP via Astro's own /_image pipeline instead; the CMS host is already
+// allowlisted for this in astro.config.mjs (image.domains). Every call site
+// forces the rendered <img> to fill its box via CSS `object-fit: cover`
+// regardless of the source's native aspect ratio, so width/height below
+// only need to be a sensible transform target for that call site's box,
+// not pixel-exact — the crop itself is CSS's job either way.
+import { Image } from "astro:assets";
+
 interface Props {
   src: string | null;
   alt?: string;
   class?: string;
   eager?: boolean;
+  /** 1x transform target in px — a 2x variant is generated automatically for `densities`. Defaults to a card-thumbnail size; pass larger values for full-width banners. */
+  width?: number;
+  height?: number;
 }
 
-const { src, alt = "", class: className, eager = false } = Astro.props;
+const { src, alt = "", class: className, eager = false, width = 320, height = 240 } = Astro.props;
 ---
 
 {src ? (
-  <img
+  <Image
     src={src}
+    width={width}
+    height={height}
+    densities={[1, 2]}
+    format="webp"
     alt={alt}
     loading={eager ? "eager" : "lazy"}
     decoding="async"
