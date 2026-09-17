@@ -3,8 +3,10 @@ import { getPageTree } from "../lib/wp";
 
 // Dynamic (not the static @astrojs/sitemap integration): WP content pages
 // are rendered live rather than enumerated at build time, so the sitemap
-// has to reflect the current page tree at request time too. Cheap since it
-// reuses the same TTL-cached page tree as every content-page request.
+// has to reflect the current page tree at request time too. getPageTree()
+// is stale-while-revalidate (including at cold start), so this never blocks
+// on a full-catalog rebuild — it may briefly list a slightly-stale or (right
+// after a restart) empty set of URLs while a rebuild runs in the background.
 export const prerender = false;
 
 const STATIC_PATHS = [""]; // homepage; add other hand-built landing pages here as they're added

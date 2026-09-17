@@ -8,7 +8,7 @@ Reference this before writing code in the corresponding area. Update this file i
 
 Revised from an earlier fully-static (`getStaticPaths()`) attempt once the hosting target was confirmed as **Hostinger only**, via their Node.js App feature (Business/Cloud plans — runs a persistent Node process, not a serverless platform). With an always-on Node process available anyway, SSR-on-demand is simpler than static generation: no build-time page enumeration, no rebuild-on-publish webhook, no deploy-hook wiring. `src/pages/[...slug].astro` and `src/pages/api/flight-search.ts` both set `export const prerender = false` and resolve/fetch per request; `index.astro` and `404.astro` still prerender since they're pure static content.
 
-Crawlability is unaffected either way: Astro SSR still returns fully-formed HTML per request (no client-side render step Googlebot has to wait on), same as a prerendered file would. The only real tradeoff vs. static is a per-request WP page-tree fetch — mitigated by the TTL cache in `src/lib/wp.ts` (`PAGE_TREE_CACHE_TTL`), so most requests hit the in-memory cache rather than WP.
+Crawlability is unaffected either way: Astro SSR still returns fully-formed HTML per request (no client-side render step Googlebot has to wait on), same as a prerendered file would. The tradeoff vs. static is a per-request WP fetch — for a single content page this is now a handful of narrow, mostly-cached REST calls scoped to that page's own URL (§3), not a full-catalog fetch; catalog-wide routes (sitemap, homepage, airlines directory) use the TTL-cached, stale-while-revalidate page tree in `src/lib/wp.ts` (`PAGE_TREE_CACHE_TTL`) instead.
 
 A WP edit shows up on the next request after the cache entry expires — no rebuild, no redeploy, nothing to trigger from WP's side.
 
@@ -31,20 +31,27 @@ The API response for a page includes:
 
 `wp_template` is not exposed by the default REST API — `wordpress/rest-api-additions.php` hooks `rest_api_init` and registers it, reading `get_page_template_slug( $post_id )`. This is a backend (WP-side) dependency; it must be installed on the WP instance before a build against it will resolve layouts correctly.
 
-**Decided: (a) — the ancestor chain is computed server-side in Astro's Node process**, not via a custom REST field. `src/lib/wp.ts` fetches the full page tree (`id`, `slug`, `parent`, `wp_template`), builds an `id → page` map, then walks `parent` links per page to compute `fullPath`. This avoids extra WP-side custom code beyond the one `wp_template` field. The fetch happens on cache-miss only (TTL-based, see §1) rather than per visitor request.
+**Decided: (a) — the ancestor chain is computed server-side in Astro's Node process**, not via a custom REST field. This avoids extra WP-side custom code beyond the one `wp_template` field.
+
+Two separate code paths do this now (reworked after the full-catalog fetch on every single-page render was identified as the cause of slow/504ing requests once the page count grew into the hundreds):
+
+- **Single-page rendering** (`getPageByPath` in `src/lib/wp.ts`, used by `[...slug].astro`): queries WP directly and narrowly — `?slug=<leaf>` to find candidate page(s) sharing that slug (a slug is unique only among siblings, not sitewide), then walks each candidate's `parent` chain via individual `/pages/<id>` lookups (cached in-process, cleared by `purgeCache()`) until the one whose computed full path matches the requested URL is found. Cost is a handful of REST calls regardless of total catalog size — it never touches the full page-tree cache.
+- **Catalog-wide listings only** (sitemap, homepage "latest pages", the airlines directory) still fetch the whole page tree (`id`, `slug`, `parent`, `wp_template`, `menu_order`, `date`, featured image — deliberately not `content`/`yoast_head_json`, unused by any of these) and build an `id → page` map / `fullPath` walk the same way §3 describes. This fetch paginates with bounded concurrency (not one request at a time) and is stale-while-revalidate, including at cold start: no request ever blocks on rebuilding it — see `getPageTree()` in `wp.ts`.
 
 ## 3. Path resolution algorithm
 
-Implemented in `src/lib/wp.ts` / `src/pages/[...slug].astro`:
+Implemented in `src/lib/wp.ts` / `src/pages/[...slug].astro`. **`getPageByPath()` queries WP directly, not the full-catalog tree** (that was the original design, dropped once it turned into the single biggest source of slow/504ing requests as the page count grew into the hundreds — every single-page render was paying for a full paginated catalog crawl first):
 
-1. `byId: Map<id, page>` built from the fetched page list.
-2. `computeFullPath(id)` walks `parent` upward, prepending each ancestor's slug, until reaching a page with no parent (with a cycle guard).
-3. `byPath: Map<fullPath, page>` built for reverse lookup; paths and lookups are normalized (trimmed slashes, lowercased) so trailing-slash/case differences don't cause false misses.
-4. `[...slug].astro` reads `Astro.params.slug` per request, calls `getPageByPath()` against the (cached) `byPath` map.
-5. If not found → `return Astro.rewrite("/404")`, which renders `src/pages/404.astro` in place without changing the URL.
+1. `[...slug].astro` reads `Astro.params.slug` per request and normalizes it (trimmed slashes, lowercased) so trailing-slash/case differences don't cause false misses; a `RESERVED_SLUGS` set in `wp.ts` (`""`, `"api"`, `"airlines"`, `"blog"`, `"home"`) short-circuits anything that would collide with a hand-built static route.
+2. `getPageByPath()` fetches `GET /pages?slug=<leaf segment>` — every page sharing that leaf slug (a slug is unique only among siblings, not sitewide, so more than one candidate is possible).
+3. For each candidate, `getAncestorRefs(parentId)` walks `parent` links one id at a time via individual `GET /pages/<id>` lookups (each cached in-process by id, cleared on `purgeCache()`), building the root-first ancestor chain and from it the candidate's full path.
+4. The first candidate whose computed full path equals the requested path is the match; its ancestor chain becomes the `ancestors` array returned alongside it (used for breadcrumbs — no further WP calls needed).
+5. If no candidate matches → `return Astro.rewrite("/404")`, which renders `src/pages/404.astro` in place without changing the URL.
 6. If found → the matched page's `wp_template` selects the layout (§4).
 
-A `RESERVED_SLUGS` set in `wp.ts` (currently `""`, `"api"`) drops any WP page that would collide with a hand-built static route.
+Cost is bounded by the requested URL's own depth (2-3 REST calls in practice, most already warm from the ancestor-ref cache), never by the total number of pages on the site.
+
+The full-catalog tree (`byId`/`byPath`/`list` Maps, `computeFullPath()` walking `parent` upward over the whole page list) still exists in `getPageTree()`/`buildPageTree()`, but is now used only by things that genuinely need to enumerate many pages at once — the sitemap, the homepage's "latest pages", the airlines directory (`getPagesByTemplateSuffix`) — never for resolving one URL.
 
 ## 4. Template → layout mapping
 
@@ -58,10 +65,10 @@ const Layout = isParentTemplate ? ParentPageLayout : isChildTemplate ? ChildPage
 
 Any WP template file ending in `parent.php` — bare (`parent.php`) or prefixed (`parking-parent.php`, `page-templates/parent.php`) — gets `ParentPageLayout`; anything ending in `child.php` gets `ChildPageLayout`. A brand-new section (Parking, Terminals, Map, Passenger Info, Car Rental, Lounges, ...) therefore needs **no Astro code change**: assign it a `<section>-parent.php` / `<section>-child.php` template pair in WP and it renders correctly immediately.
 
-Section membership (which pages belong under which parent) comes from WordPress's native page `parent` field via `getChildren()`/`getAncestorChain()`/`getSiblings()` in `wp.ts` — the template *name* only decides which layout component renders the page, it plays no part in grouping pages together.
+Section membership (which pages belong under which parent) comes from WordPress's native page `parent` field via `getChildren()`/`getSiblings()` in `wp.ts` — the template *name* only decides which layout component renders the page, it plays no part in grouping pages together. Both are scoped queries (`?parent=<id>` against WP directly), not filtered out of the full page tree — `getChildren(parentId, parentFullPath)` takes the already-known parent path so it doesn't need a separate ancestor-chain walk per child; `getSiblings(page)` derives its parent's path from `page.fullPath` and delegates to `getChildren`. Breadcrumb ancestors come from `getPageByPath`'s own parent-chain walk (§2), passed down as an `ancestors` prop rather than re-derived per layout.
 
-- `ParentPageLayout` — hero (`<h1>` + `<Breadcrumbs>`), then a two-column split: content on the left, `<PageSidebar>` on the right populated via `getLatestPages()` (the site's most recently published pages, independent of section). Below that, `<RelatedPages>` lists this page's direct children via `getChildren(page.id)`.
-- `ChildPageLayout` — renders `<RelatedPages>` populated via `getSiblings(page.id)` (entries whose `parent === currentPage.parent`, excluding the current page).
+- `ParentPageLayout` — hero (`<h1>` + `<Breadcrumbs>`), then `<RelatedPages>` listing this page's direct children via `getChildren(page.id, page.fullPath)`.
+- `ChildPageLayout` — renders `<PageSidebar>` populated via `getSiblings(page)` (this page's parent's other children, filtered to `*-child.php` templates).
 - Any template string matching neither suffix (including no template at all, e.g. `home`/`blog`) falls through to `DefaultPageLayout` — never throws or blank-pages on an unrecognized template.
 
 ## 5. Folder structure (as built)
@@ -151,7 +158,7 @@ SITE_TITLE=Airlines Locations
 ## 10. Naming conventions
 
 - Astro components: PascalCase file names, one component per file.
-- WP API client functions: verb-first — `getPageTree()`, `getPageByPath()`, `getChildren(id)`, `getSiblings(id)`, `getSiteSettings()`, `getAncestorChain()`.
+- WP API client functions: verb-first — `getPageTree()` (catalog-wide listings only), `getPageByPath()` (single-page resolution, returns `{ page, ancestors }`), `getChildren(parentId, parentFullPath)`, `getSiblings(page)`, `getSiteSettings()`.
 - All WP-fetching logic stays inside `src/lib/wp.ts` — no ad-hoc `fetch()` calls to the WP API scattered across components or pages.
 
 ## 11. Deployment

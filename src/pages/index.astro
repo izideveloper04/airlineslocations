@@ -13,9 +13,11 @@ import aboutImage from "../assets/images/about.webp";
 // Unlike robots.txt/sitemap.xml/[...slug].astro, this page has no
 // STAGING-dependent output to worry a CDN into caching stale (the noindex
 // meta tag below is resolved live per-request too, since this route is SSR).
-// Its only freshness constraint is the same TTL-cached page tree every
-// content page already relies on (src/lib/wp.ts, PAGE_TREE_CACHE_TTL), so a
-// short edge-cacheable window is safe: real caching benefit for traffic
+// Its only freshness constraint is the same stale-while-revalidate page-tree
+// cache the sitemap/airlines-directory routes use (src/lib/wp.ts,
+// PAGE_TREE_CACHE_TTL) — content pages themselves no longer depend on this
+// cache at all (getPageByPath resolves directly against WP) — so a short
+// edge-cacheable window here is safe: real caching benefit for traffic
 // spikes, revalidated in the background rather than round-tripping to origin
 // on every single request.
 Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=30, stale-while-revalidate=60");

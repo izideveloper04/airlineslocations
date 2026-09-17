@@ -3,9 +3,10 @@ import { isStaging } from "../lib/config";
 import { getPageTree, isParentTemplate, isChildTemplate } from "../lib/wp";
 
 // Dynamic, mirroring robots.txt.ts/sitemap.xml.ts: reflects the live WP page
-// tree at request time (the same TTL-cached fetch every content page already
-// pays for), so a newly published airline or office page shows up here on
-// its own — nothing in this file needs editing by hand when content changes.
+// tree at request time (the same stale-while-revalidate catalog cache
+// sitemap.xml.ts uses), so a newly published airline or office page shows
+// up here on its own — nothing in this file needs editing by hand when
+// content changes.
 export const prerender = false;
 
 export const GET: APIRoute = async ({ site }) => {
